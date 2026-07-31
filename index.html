@@ -750,23 +750,24 @@
 
             const playerUrl = `player.html?type=${type}&id=${key}`;
 
-            if (type === 'matches') {
-                const matchAdConf = (adsSettings.matches && adsSettings.matches[key]) ? adsSettings.matches[key] : {};
-                const isGlobalAdOn = adsSettings.global_enabled !== false;
-                const isMatchAdOn = matchAdConf.enabled !== false;
-                const adUrl = matchAdConf.ad_url || adsSettings.default_ad_url;
-                const cooldownMinutes = parseInt(matchAdConf.cooldown_minutes) || parseInt(adsSettings.cooldown_minutes) || 60; 
-                const now = new Date().getTime();
-                const lastClickKey = `cricton_ad_last_click_${key}`;
-                const lastClickTime = parseInt(localStorage.getItem(lastClickKey) || '0');
-                const cooldownMs = cooldownMinutes * 60 * 1000;
+            // Check Ad Configuration dynamically for all types ('matches', 'channels', 'banners')
+            const itemAdConf = (adsSettings[type] && adsSettings[type][key]) ? adsSettings[type][key] : {};
+            const isGlobalAdOn = adsSettings.global_enabled !== false;
+            const isItemAdOn = itemAdConf.enabled !== false;
+            const adUrl = itemAdConf.ad_url || adsSettings.default_ad_url;
+            const cooldownMinutes = parseInt(itemAdConf.cooldown_minutes) || parseInt(adsSettings.cooldown_minutes) || 60; 
+            const now = new Date().getTime();
+            
+            // Unique LocalStorage Key for each item and section
+            const lastClickKey = `cricton_ad_last_click_${type}_${key}`;
+            const lastClickTime = parseInt(localStorage.getItem(lastClickKey) || '0');
+            const cooldownMs = cooldownMinutes * 60 * 1000;
 
-                if (isGlobalAdOn && isMatchAdOn && adUrl && (now - lastClickTime >= cooldownMs)) {
-                    localStorage.setItem(lastClickKey, now.toString());
-                    sessionStorage.setItem('cricton_pending_stream', playerUrl);
-                    window.location.href = adUrl;
-                    return;
-                }
+            if (isGlobalAdOn && isItemAdOn && adUrl && (now - lastClickTime >= cooldownMs)) {
+                localStorage.setItem(lastClickKey, now.toString());
+                sessionStorage.setItem('cricton_pending_stream', playerUrl);
+                window.location.href = adUrl;
+                return;
             }
 
             window.location.href = playerUrl;
