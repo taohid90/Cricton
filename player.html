@@ -14,10 +14,12 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap');
-        body { background: #05070d; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #f1f5f9; }
+        body { background: #05070d; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #f1f5f9; overflow-x: hidden; }
         
-        .slim-card { background: rgba(11, 15, 25, 0.95); border: 1px solid rgba(56, 189, 248, 0.2); transition: border-color 0.2s ease; }
-        .slim-card:hover { border-color: rgba(56, 189, 248, 0.6); }
+        .slim-card { background: rgba(11, 15, 25, 0.95); border: 1px solid rgba(56, 189, 248, 0.2); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); transition: border-color 0.2s ease, transform 0.15s ease; text-decoration: none !important; }
+        .slim-card:active { transform: scale(0.98); border-color: rgba(56, 189, 248, 0.6); }
+        .highlight-card { background: linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(7, 10, 19, 0.95) 100%); border: 1px solid rgba(56, 189, 248, 0.15); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5); transition: all 0.25s ease; }
+        .tv-card { background: linear-gradient(145deg, rgba(15, 20, 35, 0.95), rgba(10, 12, 22, 0.95)); border: 1px solid rgba(168, 85, 247, 0.25); transition: all 0.2s ease; }
         .glass-modal { background: rgba(8, 11, 20, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.15); }
         
         /* Custom Seekbar */
@@ -28,13 +30,24 @@
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Fullscreen Landscape Player Fix */
+        #playerContainer:fullscreen {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: none !important;
+        }
+        #playerContainer:-webkit-full-screen {
+            width: 100vw !important;
+            height: 100vh !important;
+        }
     </style>
 </head>
 <body class="max-w-md mx-auto min-h-screen relative pb-12 border-x border-gray-900/60 flex flex-col">
 
     <!-- Share Modal Overlay -->
     <div id="shareOverlay" onclick="closeShareModal()" class="fixed inset-0 bg-black/80 z-50 hidden transition-opacity"></div>
-    <div id="shareModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass-modal rounded-t-3xl p-5 z-50 hidden space-y-4 animate-slide-up">
+    <div id="shareModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass-modal rounded-t-3xl p-5 z-50 hidden space-y-4">
         <div class="flex justify-between items-center border-b border-gray-800 pb-3">
             <h3 class="font-bold text-sm text-white flex items-center gap-2">
                 <i class="fa-solid fa-share-nodes text-cyan-400"></i> Share Stream
@@ -82,7 +95,7 @@
 
     <!-- Sticky Custom Video Player Container -->
     <div class="sticky top-[53px] z-40 bg-black shadow-2xl">
-        <div id="playerContainer" class="relative group w-full aspect-video bg-black overflow-hidden flex items-center justify-center">
+        <div id="playerContainer" onmousemove="userActivityTrigger()" ontouchstart="userActivityTrigger()" class="relative w-full aspect-video bg-black overflow-hidden flex items-center justify-center select-none">
             
             <!-- Video Loading Spinner -->
             <div id="videoLoader" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-20 gap-2">
@@ -96,15 +109,15 @@
             <!-- Iframe Fallback -->
             <iframe id="iframePlayer" class="w-full h-full hidden" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
 
-            <!-- Custom Video Controls Overlay -->
-            <div id="customControls" class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3 z-10 pointer-events-none">
+            <!-- Custom Video Controls Overlay (With Auto-Hide Feature) -->
+            <div id="customControls" class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/40 transition-opacity duration-300 flex flex-col justify-between p-3 z-10 opacity-100">
                 
-                <!-- Player Top Info -->
+                <!-- Player Top Info Bar -->
                 <div class="flex items-center justify-between pointer-events-auto">
                     <span id="playerLiveBadge" class="bg-rose-600 text-white font-extrabold text-[9px] px-2 py-0.5 rounded-md flex items-center gap-1 uppercase tracking-wider">
                         <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span> LIVE
                     </span>
-                    <button onclick="reloadStream()" class="text-gray-300 hover:text-cyan-400 text-xs bg-black/50 p-1.5 rounded-lg border border-gray-800"><i class="fa-solid fa-rotate-right"></i></button>
+                    <button onclick="reloadStream()" class="text-gray-300 hover:text-cyan-400 text-xs bg-black/60 p-1.5 rounded-lg border border-gray-800"><i class="fa-solid fa-rotate-right"></i></button>
                 </div>
 
                 <!-- Center Play/Pause Button -->
@@ -121,13 +134,13 @@
                             <button onclick="toggleMute()"><i id="muteIcon" class="fa-solid fa-volume-high"></i></button>
                             <span id="timeDisplay" class="text-[10px] text-gray-400">00:00</span>
                         </div>
-                        <button onclick="toggleFullscreen()"><i class="fa-solid fa-expand"></i></button>
+                        <button onclick="toggleFullscreen()"><i id="fullscreenIcon" class="fa-solid fa-expand"></i></button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Multi-Server Selector -->
+        <!-- Multi-Server Selector Bar -->
         <div id="serverBar" class="bg-[#080b14] px-3 py-2 border-b border-gray-800 flex items-center gap-2 overflow-x-auto no-scrollbar">
             <span class="text-[10px] text-cyan-400 font-bold uppercase shrink-0 flex items-center gap-1">
                 <i class="fa-solid fa-server"></i> Servers:
@@ -169,7 +182,7 @@
             </button>
             <button id="tabBtnSuggested" onclick="switchTab('suggested')" class="flex-1 py-2 rounded-xl text-xs font-extrabold bg-gray-900 border border-gray-800 text-gray-400 flex items-center justify-center gap-2">
                 <i class="fa-solid fa-layer-group"></i>
-                <span>Suggested</span>
+                <span>Suggested Streams</span>
             </button>
         </div>
 
@@ -189,9 +202,9 @@
             </form>
         </div>
 
-        <!-- Tab 2: Suggested Content -->
-        <div id="tabContentSuggested" class="hidden space-y-2">
-            <div id="suggestedGrid" class="space-y-2"></div>
+        <!-- Tab 2: Suggested Content (Same Homepage Grid System) -->
+        <div id="tabContentSuggested" class="hidden space-y-2.5">
+            <div id="suggestedGrid" class="space-y-2.5"></div>
         </div>
 
     </main>
@@ -212,6 +225,10 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // Retrieve Ads Config
+        let adsSettings = {};
+        db.ref("ads_config").on("value", snap => { adsSettings = snap.val() || {}; });
+
         // Get Query Params
         const urlParams = new URLSearchParams(window.location.search);
         const itemType = urlParams.get('type') || 'matches';
@@ -222,7 +239,7 @@
         let hlsInstance = null;
         let isShareOpen = false;
 
-        // Mobile Hardware Back Button Handling
+        // Mobile Hardware Back Button
         window.addEventListener('popstate', (e) => {
             if (isShareOpen) {
                 closeShareModal(false);
@@ -235,7 +252,7 @@
             window.location.href = 'index.html';
         }
 
-        // Unique User ID and Name Setup
+        // Unique User Setup
         if (!localStorage.getItem('cricton_user_id')) {
             localStorage.setItem('cricton_user_id', 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now());
         }
@@ -250,7 +267,7 @@
             if(e.target.value.trim()) localStorage.setItem('cricton_user_name', e.target.value.trim());
         });
 
-        // Load Content Data safely without duplicate triggers
+        // Load Content Data
         let isSetupCompleted = false;
 
         if (itemId) {
@@ -262,7 +279,7 @@
                         setupPresenceAndLikes();
                         setupLiveChat();
                         loadSuggested();
-                        isSetupCompleted = true; // নিশ্চিত করে যে Presence শুধু ১ বারই সেট হবে
+                        isSetupCompleted = true;
                     }
                 } else {
                     document.getElementById('streamTitle').innerText = "Stream Not Found";
@@ -280,7 +297,7 @@
                 document.getElementById('tabChatText').innerText = "Live Chat";
             }
 
-            // Unlimited Dynamic Servers Setup
+            // Servers Setup
             let servers = [];
             if (currentData.servers && Array.isArray(currentData.servers) && currentData.servers.length > 0) {
                 currentData.servers.forEach((url, i) => {
@@ -313,10 +330,25 @@
             }
         }
 
-        // Custom Player Implementation with Advanced HLS.js Config
+        // Custom Player Controls Auto-Hide Feature (3 Seconds Timeout)
         const video = document.getElementById('videoPlayer');
         const iframe = document.getElementById('iframePlayer');
         const loader = document.getElementById('videoLoader');
+        const customControls = document.getElementById('customControls');
+        let controlsHideTimeout = null;
+
+        function userActivityTrigger() {
+            customControls.style.opacity = "1";
+            customControls.style.pointerEvents = "auto";
+
+            clearTimeout(controlsHideTimeout);
+            if (!video.paused) {
+                controlsHideTimeout = setTimeout(() => {
+                    customControls.style.opacity = "0";
+                    customControls.style.pointerEvents = "none";
+                }, 3000);
+            }
+        }
 
         function playSource(url) {
             activeUrl = url;
@@ -338,14 +370,11 @@
                 if (Hls.isSupported() && url.includes('.m3u8')) {
                     if (hlsInstance) hlsInstance.destroy();
 
-                    // Advanced High Performance HLS Configuration
                     hlsInstance = new Hls({
                         enableWorker: true,
                         lowLatencyMode: true,
                         backBufferLength: 90,
-                        maxBufferLength: 30,
-                        maxMaxBufferLength: 600,
-                        maxBufferSize: 60 * 1000 * 1000
+                        maxBufferLength: 30
                     });
 
                     hlsInstance.loadSource(url);
@@ -354,9 +383,9 @@
                     hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
                         loader.classList.add('hidden');
                         video.play().catch(() => {});
+                        userActivityTrigger();
                     });
 
-                    // Auto Network & Media Error Recovery
                     hlsInstance.on(Hls.Events.ERROR, (event, data) => {
                         if (data.fatal) {
                             switch (data.type) {
@@ -377,6 +406,7 @@
                     video.addEventListener('loadeddata', () => {
                         loader.classList.add('hidden');
                         video.play().catch(() => {});
+                        userActivityTrigger();
                     });
                 }
             }
@@ -386,7 +416,6 @@
             if (activeUrl) playSource(activeUrl);
         }
 
-        // Player Controls Logic
         function togglePlay() {
             if (video.paused) {
                 video.play();
@@ -397,19 +426,59 @@
                 document.getElementById('playIcon').className = "fa-solid fa-play ml-0.5";
                 document.getElementById('bottomPlayIcon').className = "fa-solid fa-play text-cyan-400";
             }
+            userActivityTrigger();
         }
 
         function toggleMute() {
             video.muted = !video.muted;
             document.getElementById('muteIcon').className = video.muted ? "fa-solid fa-volume-xmark text-rose-500" : "fa-solid fa-volume-high";
+            userActivityTrigger();
         }
 
-        function toggleFullscreen() {
+        // Advanced Fullscreen & Landscape Screen Rotation Logic
+        async function toggleFullscreen() {
             const container = document.getElementById('playerContainer');
-            if (!document.fullscreenElement) {
-                if (container.requestFullscreen) container.requestFullscreen();
+            
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                try {
+                    if (container.requestFullscreen) {
+                        await container.requestFullscreen();
+                    } else if (container.webkitRequestFullscreen) {
+                        await container.webkitRequestFullscreen();
+                    }
+
+                    // Auto Rotate Screen to Landscape on Mobile
+                    if (screen.orientation && screen.orientation.lock) {
+                        await screen.orientation.lock('landscape').catch(() => {});
+                    }
+                } catch (e) {}
             } else {
-                if (document.exitFullscreen) document.exitFullscreen();
+                try {
+                    if (document.exitFullscreen) {
+                        await document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) {
+                        await document.webkitExitFullscreen();
+                    }
+
+                    // Unlock Screen Rotation
+                    if (screen.orientation && screen.orientation.unlock) {
+                        screen.orientation.unlock();
+                    }
+                } catch (e) {}
+            }
+            userActivityTrigger();
+        }
+
+        // Fullscreen Change Icon Sync
+        document.addEventListener("fullscreenchange", updateFullscreenUI);
+        document.addEventListener("webkitfullscreenchange", updateFullscreenUI);
+
+        function updateFullscreenUI() {
+            const icon = document.getElementById('fullscreenIcon');
+            if (document.fullscreenElement || document.webkitFullscreenElement) {
+                icon.className = "fa-solid fa-compress";
+            } else {
+                icon.className = "fa-solid fa-expand";
             }
         }
 
@@ -431,12 +500,11 @@
             }
         });
 
-        // Realtime Viewers Presence System (Real Unique User Tracking)
+        // Realtime Viewers Presence System
         function setupPresenceAndLikes() {
             const myViewerRef = db.ref(`viewers/${itemType}_${itemId}/${userId}`);
             const viewersListRef = db.ref(`viewers/${itemType}_${itemId}`);
 
-            // Firebase এর নিজস্ব কানেকশন স্ট্যাটাস দিয়ে রিয়েল ভিউয়ার ট্র্যাকিং
             db.ref('.info/connected').on('value', snap => {
                 if (snap.val() === true) {
                     myViewerRef.onDisconnect().remove();
@@ -444,13 +512,11 @@
                 }
             });
 
-            // রিয়েলটাইম লাইভ ভিউয়ার কাউন্ট আপডেট
             viewersListRef.on('value', snap => {
                 const count = snap.numChildren() || 1;
                 document.getElementById('realViewerCount').innerText = `${count} Watching`;
             });
 
-            // লাইক সংখ্যা ফায়ারবেস থেকে পড়া
             db.ref(`${itemType}/${itemId}/likes`).on('value', snap => {
                 document.getElementById('likeCountText').innerText = snap.val() || 0;
             });
@@ -458,24 +524,20 @@
             updateLikeUI();
         }
 
-        // ১ জন ইউজার শুধু ১ বারই লাইক দিতে পারবে (Toggle System)
         function handleLike() {
             const likeKey = `liked_${itemType}_${itemId}`;
             const hasLiked = localStorage.getItem(likeKey);
 
             if (hasLiked) {
-                // যদি আগে লাইক দেওয়া থাকে, তাহলে লাইক কমে যাবে (Unlike)
                 db.ref(`${itemType}/${itemId}/likes`).transaction(c => Math.max(0, (c || 1) - 1));
                 localStorage.removeItem(likeKey);
             } else {
-                // লাইক না দেওয়া থাকলে ১টি লাইক যোগ হবে
                 db.ref(`${itemType}/${itemId}/likes`).transaction(c => (c || 0) + 1);
                 localStorage.setItem(likeKey, 'true');
             }
             updateLikeUI();
         }
 
-        // লাইক বাটনের কালার ও অবস্থা আপডেট
         function updateLikeUI() {
             const hasLiked = localStorage.getItem(`liked_${itemType}_${itemId}`);
             const likeBtn = document.querySelector('button[onclick="handleLike()"]');
@@ -561,7 +623,7 @@
             }
         }
 
-        // Suggested Stream Loader
+        // Suggested Stream Loader (EXACT HOMEPAGE CARD UI SYSTEM)
         function loadSuggested() {
             const grid = document.getElementById('suggestedGrid');
             db.ref(itemType).on('value', snap => {
@@ -569,28 +631,120 @@
                 const data = snap.val() || {};
                 let count = 0;
 
+                // Adjust grid style based on section
+                if (itemType === 'channels') {
+                    grid.className = "grid grid-cols-3 gap-2.5 pt-1";
+                } else {
+                    grid.className = "space-y-2.5";
+                }
+
                 Object.keys(data).forEach(k => {
                     if (k === itemId) return;
                     count++;
                     const item = data[k];
 
-                    let title = item.title || item.name || 'Live Match';
-                    let img = item.team1Logo || item.logo || item.image || 'https://via.placeholder.com/100';
+                    if (itemType === 'matches') {
+                        // LIVE MATCHES HOMEPAGE CARD
+                        const catLower = ((item.category||'') + ' ' + (item.title||'')).toLowerCase();
+                        const sportIcon = (catLower.includes('football') || catLower.includes('soccer')) 
+                            ? 'https://cdn-icons-png.flaticon.com/128/491/491588.png' 
+                            : 'https://cdn-icons-png.flaticon.com/128/2160/2160064.png';
 
-                    grid.innerHTML += `
-                        <div onclick="window.location.href='player.html?type=${itemType}&id=${k}'" class="slim-card rounded-2xl p-2.5 cursor-pointer flex items-center gap-3">
-                            <img src="${img}" class="w-10 h-10 rounded-xl object-cover bg-black border border-gray-800 shrink-0">
-                            <div class="overflow-hidden flex-1">
-                                <h3 class="font-bold text-xs text-gray-100 truncate">${title}</h3>
-                                <span class="text-[10px] text-cyan-400 font-bold block pt-0.5">Watch Live <i class="fa-solid fa-chevron-right text-[8px]"></i></span>
-                            </div>
-                        </div>`;
+                        grid.innerHTML += `
+                            <div onclick="openItemWithAds('${itemType}', '${k}')" class="slim-card rounded-2xl p-2.5 cursor-pointer h-[105px] flex flex-col justify-between">
+                                <div class="flex items-center justify-between text-[10px] gap-2">
+                                    <div class="flex items-center gap-1.5 font-bold tracking-wider text-gray-300 overflow-hidden">
+                                        <img src="${sportIcon}" class="w-4 h-4 object-contain shrink-0" alt="sport">
+                                        <span class="truncate max-w-[150px] text-gray-200 font-bold">${item.title || 'Live Match'}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/30 shrink-0">
+                                        <span class="relative flex h-2 w-2">
+                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                            <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                                        </span>
+                                        <span class="text-rose-400 font-extrabold text-[9px] tracking-wider uppercase">LIVE</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between text-xs px-1">
+                                    <div class="flex items-center gap-2 w-5/12 justify-start overflow-hidden">
+                                        <img src="${item.team1Logo}" class="w-9 h-9 rounded-full border border-gray-700 object-cover shrink-0 bg-black p-0.5" onerror="this.src='https://via.placeholder.com/50'">
+                                        <span class="font-bold text-gray-200 truncate text-[11px]">${item.team1Name}</span>
+                                    </div>
+                                    <div class="w-2/12 shrink-0 flex items-center justify-center font-black text-cyan-400 text-xs">VS</div>
+                                    <div class="flex items-center gap-2 w-5/12 justify-end text-right overflow-hidden">
+                                        <span class="font-bold text-gray-200 truncate text-[11px]">${item.team2Name}</span>
+                                        <img src="${item.team2Logo}" class="w-9 h-9 rounded-full border border-gray-700 object-cover shrink-0 bg-black p-0.5" onerror="this.src='https://via.placeholder.com/50'">
+                                    </div>
+                                </div>
+                                <div class="text-[10px] text-center text-cyan-400 font-bold">Watch Stream Now</div>
+                            </div>`;
+
+                    } else if (itemType === 'channels') {
+                        // LIVE TV CHANNELS HOMEPAGE CARD
+                        grid.innerHTML += `
+                            <div onclick="openItemWithAds('${itemType}', '${k}')" class="tv-card p-2.5 rounded-2xl flex flex-col items-center gap-2 cursor-pointer text-center relative overflow-hidden group">
+                                <div class="w-12 h-12 rounded-xl bg-black/80 border border-gray-800 p-1 flex items-center justify-center shadow-md">
+                                    <img src="${item.logo}" class="w-full h-full object-contain rounded-lg" onerror="this.src='https://via.placeholder.com/80'">
+                                </div>
+                                <div>
+                                    <span class="text-xs font-bold text-gray-100 block truncate max-w-[85px] group-hover:text-purple-300 transition">${item.name}</span>
+                                    <span class="text-[9px] text-purple-400/80 font-semibold block">${item.category || 'TV Channel'}</span>
+                                </div>
+                            </div>`;
+
+                    } else if (itemType === 'banners') {
+                        // HIGHLIGHTS HOMEPAGE CARD
+                        grid.innerHTML += `
+                            <div onclick="openItemWithAds('${itemType}', '${k}')" class="highlight-card rounded-2xl p-2.5 cursor-pointer group space-y-2">
+                                <div class="relative aspect-video rounded-xl overflow-hidden bg-black/60 border border-gray-800">
+                                    <img src="${item.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://via.placeholder.com/400x225'">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <div class="w-10 h-10 rounded-full bg-cyan-500/90 text-black flex items-center justify-center pl-0.5 shadow-lg shadow-cyan-500/30 group-hover:scale-110 transition">
+                                            <i class="fa-solid fa-play text-xs"></i>
+                                        </div>
+                                    </div>
+                                    <span class="absolute top-2 left-2 bg-black/70 backdrop-blur-md text-cyan-400 font-extrabold text-[9px] px-2 py-0.5 rounded-md border border-cyan-500/30 uppercase">HIGHLIGHT</span>
+                                </div>
+                                <div class="px-1 flex items-center justify-between gap-2">
+                                    <p class="font-bold text-xs text-gray-100 truncate">${item.title}</p>
+                                    <span class="text-[10px] text-cyan-400 font-bold shrink-0">Watch <i class="fa-solid fa-chevron-right text-[8px] ml-0.5"></i></span>
+                                </div>
+                            </div>`;
+                    }
                 });
 
                 if (count === 0) {
-                    grid.innerHTML = `<p class="text-gray-500 text-xs text-center py-6">No suggestions available.</p>`;
+                    grid.innerHTML = `<p class="text-gray-500 text-xs text-center col-span-3 py-6">No suggested streams available.</p>`;
                 }
             });
+        }
+
+        // Click Handler with Ad Logic for Suggested Items
+        function openItemWithAds(type, key) {
+            db.ref(`${type}/${key}/clicks`).transaction(c => (c || 0) + 1);
+
+            const targetPlayerUrl = `player.html?type=${type}&id=${key}`;
+
+            const itemAdConf = (adsSettings[type] && adsSettings[type][key]) ? adsSettings[type][key] : {};
+            const isGlobalAdOn = adsSettings.global_enabled !== false;
+            const isItemAdOn = itemAdConf.enabled !== false;
+            const adUrl = itemAdConf.ad_url || adsSettings.default_ad_url;
+            const cooldownMinutes = parseInt(itemAdConf.cooldown_minutes) || parseInt(adsSettings.cooldown_minutes) || 60; 
+            const now = new Date().getTime();
+
+            const lastClickKey = `cricton_ad_last_click_${type}_${key}`;
+            const lastClickTime = parseInt(localStorage.getItem(lastClickKey) || '0');
+            const cooldownMs = cooldownMinutes * 60 * 1000;
+
+            if (isGlobalAdOn && isItemAdOn && adUrl && (now - lastClickTime >= cooldownMs)) {
+                localStorage.setItem(lastClickKey, now.toString());
+                sessionStorage.setItem('cricton_pending_stream', targetPlayerUrl);
+                window.location.href = adUrl;
+                return;
+            }
+
+            window.location.href = targetPlayerUrl;
         }
 
         // Share Card Modal Functions
