@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRICTON - Live Stream</title>
+    <meta name="theme-color" content="#05070d">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Advanced HLS.js -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap');
+        body { background: #05070d; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #f1f5f9; }
+        
+        .slim-card { background: rgba(11, 15, 25, 0.95); border: 1px solid rgba(56, 189, 248, 0.2); transition: border-color 0.2s ease; }
+        .slim-card:hover { border-color: rgba(56, 189, 248, 0.6); }
+        .glass-modal { background: rgba(8, 11, 20, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.15); }
+        
+        /* Custom Seekbar */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none;
+            width: 12px; height: 12px; background: #38bdf8;
+            border-radius: 50%; cursor: pointer;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="max-w-md mx-auto min-h-screen relative pb-12 border-x border-gray-900/60 flex flex-col">
+
+    <!-- Share Modal Overlay -->
+    <div id="shareOverlay" onclick="closeShareModal()" class="fixed inset-0 bg-black/80 z-50 hidden transition-opacity"></div>
+    <div id="shareModal" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md glass-modal rounded-t-3xl p-5 z-50 hidden space-y-4 animate-slide-up">
+        <div class="flex justify-between items-center border-b border-gray-800 pb-3">
+            <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                <i class="fa-solid fa-share-nodes text-cyan-400"></i> Share Stream
+            </h3>
+            <button onclick="closeShareModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        
+        <!-- Social Share Grid -->
+        <div class="grid grid-cols-4 gap-3 text-center pt-1">
+            <button onclick="shareSocial('whatsapp')" class="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition">
+                <i class="fa-brands fa-whatsapp text-2xl"></i>
+                <span class="text-[10px] font-bold">WhatsApp</span>
+            </button>
+            <button onclick="shareSocial('telegram')" class="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-400 hover:bg-sky-500/20 transition">
+                <i class="fa-brands fa-telegram text-2xl"></i>
+                <span class="text-[10px] font-bold">Telegram</span>
+            </button>
+            <button onclick="shareSocial('facebook')" class="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 transition">
+                <i class="fa-brands fa-facebook text-2xl"></i>
+                <span class="text-[10px] font-bold">Facebook</span>
+            </button>
+            <button onclick="shareSocial('twitter')" class="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-gray-500/10 border border-gray-500/30 text-gray-200 hover:bg-gray-500/20 transition">
+                <i class="fa-brands fa-x-twitter text-2xl"></i>
+                <span class="text-[10px] font-bold">Twitter</span>
+            </button>
+        </div>
+
+        <button onclick="copyShareLink()" class="w-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-400 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-cyan-500/30 transition">
+            <i class="fa-regular fa-copy"></i> <span id="copyBtnText">Copy Stream Link</span>
+        </button>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="bg-[#070912]/90 backdrop-blur-md px-4 py-3 flex items-center justify-between sticky top-0 z-40 border-b border-gray-800/80">
+        <button onclick="goBack()" class="w-9 h-9 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-300 hover:text-white transition">
+            <i class="fa-solid fa-chevron-left text-xs"></i>
+        </button>
+        
+        <span class="font-extrabold text-lg tracking-wider text-white">CRICTON</span>
+        
+        <button onclick="openShareModal()" class="w-9 h-9 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 hover:bg-cyan-500/20 transition">
+            <i class="fa-solid fa-share-nodes text-xs"></i>
+        </button>
+    </header>
+
+    <!-- Sticky Custom Video Player Container -->
+    <div class="sticky top-[53px] z-40 bg-black shadow-2xl">
+        <div id="playerContainer" class="relative group w-full aspect-video bg-black overflow-hidden flex items-center justify-center">
+            
+            <!-- Video Loading Spinner -->
+            <div id="videoLoader" class="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-20 gap-2">
+                <i class="fa-solid fa-circle-notch animate-spin text-cyan-400 text-3xl"></i>
+                <span class="text-xs text-gray-400 font-bold tracking-wide">Connecting Live Stream...</span>
+            </div>
+
+            <!-- HTML5 Video Element -->
+            <video id="videoPlayer" class="w-full h-full object-contain cursor-pointer" playsinline crossorigin="anonymous"></video>
+
+            <!-- Iframe Fallback -->
+            <iframe id="iframePlayer" class="w-full h-full hidden" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+
+            <!-- Custom Video Controls Overlay -->
+            <div id="customControls" class="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3 z-10 pointer-events-none">
+                
+                <!-- Player Top Info -->
+                <div class="flex items-center justify-between pointer-events-auto">
+                    <span id="playerLiveBadge" class="bg-rose-600 text-white font-extrabold text-[9px] px-2 py-0.5 rounded-md flex items-center gap-1 uppercase tracking-wider">
+                        <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span> LIVE
+                    </span>
+                    <button onclick="reloadStream()" class="text-gray-300 hover:text-cyan-400 text-xs bg-black/50 p-1.5 rounded-lg border border-gray-800"><i class="fa-solid fa-rotate-right"></i></button>
+                </div>
+
+                <!-- Center Play/Pause Button -->
+                <button onclick="togglePlay()" class="pointer-events-auto self-center w-12 h-12 rounded-full bg-cyan-500/90 text-black flex items-center justify-center text-lg shadow-lg shadow-cyan-500/30 hover:scale-110 transition">
+                    <i id="playIcon" class="fa-solid fa-play ml-0.5"></i>
+                </button>
+
+                <!-- Bottom Control Bar -->
+                <div class="space-y-1.5 pointer-events-auto">
+                    <input type="range" id="seekBar" min="0" value="0" step="0.1" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-400">
+                    <div class="flex items-center justify-between text-[11px] font-bold text-gray-300">
+                        <div class="flex items-center gap-3">
+                            <button onclick="togglePlay()"><i id="bottomPlayIcon" class="fa-solid fa-play text-cyan-400"></i></button>
+                            <button onclick="toggleMute()"><i id="muteIcon" class="fa-solid fa-volume-high"></i></button>
+                            <span id="timeDisplay" class="text-[10px] text-gray-400">00:00</span>
+                        </div>
+                        <button onclick="toggleFullscreen()"><i class="fa-solid fa-expand"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multi-Server Selector -->
+        <div id="serverBar" class="bg-[#080b14] px-3 py-2 border-b border-gray-800 flex items-center gap-2 overflow-x-auto no-scrollbar">
+            <span class="text-[10px] text-cyan-400 font-bold uppercase shrink-0 flex items-center gap-1">
+                <i class="fa-solid fa-server"></i> Servers:
+            </span>
+            <div id="serverButtons" class="flex items-center gap-1.5 shrink-0"></div>
+        </div>
+    </div>
+
+    <!-- Details & Tab Section -->
+    <main class="p-3 space-y-3 flex-1 flex flex-col">
+
+        <!-- Stream Title & Live Watchers -->
+        <div class="slim-card rounded-2xl p-3 space-y-2">
+            <h1 id="streamTitle" class="text-xs font-extrabold text-white leading-snug">Loading Event...</h1>
+            
+            <div class="flex items-center justify-between text-xs pt-2 border-t border-gray-800/80">
+                <!-- Realtime Viewer Presence -->
+                <div class="flex items-center gap-1.5 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/30">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                    </span>
+                    <span id="realViewerCount" class="text-rose-400 font-bold text-[10px] tracking-wider uppercase">1 Watching</span>
+                </div>
+
+                <!-- Like Button -->
+                <button onclick="handleLike()" class="flex items-center gap-1.5 bg-gray-900 px-3 py-1 rounded-xl border border-gray-800 text-gray-200 hover:text-rose-400 transition">
+                    <i class="fa-solid fa-heart text-rose-500 text-xs"></i>
+                    <span id="likeCountText" class="text-[11px] font-bold">0</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs (Chat / Suggested) -->
+        <div class="flex gap-2 border-b border-gray-800/80 pb-2">
+            <button id="tabBtnChat" onclick="switchTab('chat')" class="flex-1 py-2 rounded-xl text-xs font-extrabold bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center gap-2">
+                <i id="tabChatIcon" class="fa-solid fa-comments"></i>
+                <span id="tabChatText">Live Chat</span>
+            </button>
+            <button id="tabBtnSuggested" onclick="switchTab('suggested')" class="flex-1 py-2 rounded-xl text-xs font-extrabold bg-gray-900 border border-gray-800 text-gray-400 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-layer-group"></i>
+                <span>Suggested</span>
+            </button>
+        </div>
+
+        <!-- Tab 1: Live Chat / Comments Section -->
+        <div id="tabContentChat" class="slim-card rounded-2xl p-3 space-y-2 flex-1 flex flex-col min-h-[250px]">
+            <div id="chatMessages" class="flex-1 overflow-y-auto space-y-2 max-h-56 pr-1 no-scrollbar text-xs">
+                <p class="text-center text-gray-500 text-xs py-8">Connecting Chat...</p>
+            </div>
+
+            <!-- Message Form -->
+            <form onsubmit="sendMessage(event)" class="flex items-center gap-2 pt-2 border-t border-gray-800">
+                <input type="text" id="userNameInput" placeholder="Name" class="w-20 bg-gray-900 border border-gray-800 text-white text-[11px] rounded-xl px-2 py-2 focus:outline-none focus:border-cyan-500 shrink-0">
+                <input type="text" id="chatMessageInput" placeholder="Type a message..." required class="flex-1 bg-gray-900 border border-gray-800 text-white text-[11px] rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500">
+                <button type="submit" class="bg-cyan-500 text-black px-3 py-2 rounded-xl text-xs font-bold hover:bg-cyan-400 transition shrink-0">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Tab 2: Suggested Content -->
+        <div id="tabContentSuggested" class="hidden space-y-2">
+            <div id="suggestedGrid" class="space-y-2"></div>
+        </div>
+
+    </main>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyD_HBGuQSh_GzqrHqHbgdaoBikLZsK3Qqs",
+            authDomain: "new-all-f99f7.firebaseapp.com",
+            databaseURL: "https://new-all-f99f7-default-rtdb.firebaseio.com",
+            projectId: "new-all-f99f7",
+            storageBucket: "new-all-f99f7.firebasestorage.app",
+            messagingSenderId: "1069748173900",
+            appId: "1:1069748173900:web:158d6336c0f4628133c8e9",
+            measurementId: "G-V6DZ37WSBF"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Get Query Params
+        const urlParams = new URLSearchParams(window.location.search);
+        const itemType = urlParams.get('type') || 'matches';
+        const itemId = urlParams.get('id');
+
+        let currentData = null;
+        let activeUrl = '';
+        let hlsInstance = null;
+        let isShareOpen = false;
+
+        // Mobile Hardware Back Button Handling
+        window.addEventListener('popstate', (e) => {
+            if (isShareOpen) {
+                closeShareModal(false);
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        // Unique User ID and Name Setup
+        if (!localStorage.getItem('cricton_user_id')) {
+            localStorage.setItem('cricton_user_id', 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now());
+        }
+        const userId = localStorage.getItem('cricton_user_id');
+
+        if (!localStorage.getItem('cricton_user_name')) {
+            localStorage.setItem('cricton_user_name', 'Fan_' + Math.floor(1000 + Math.random() * 9000));
+        }
+        document.getElementById('userNameInput').value = localStorage.getItem('cricton_user_name');
+
+        document.getElementById('userNameInput').addEventListener('change', (e) => {
+            if(e.target.value.trim()) localStorage.setItem('cricton_user_name', e.target.value.trim());
+        });
+
+        // Load Content Data safely without duplicate triggers
+        let isSetupCompleted = false;
+
+        if (itemId) {
+            db.ref(`${itemType}/${itemId}`).on('value', snap => {
+                currentData = snap.val();
+                if (currentData) {
+                    renderInfo();
+                    if (!isSetupCompleted) {
+                        setupPresenceAndLikes();
+                        setupLiveChat();
+                        loadSuggested();
+                        isSetupCompleted = true; // নিশ্চিত করে যে Presence শুধু ১ বারই সেট হবে
+                    }
+                } else {
+                    document.getElementById('streamTitle').innerText = "Stream Not Found";
+                }
+            });
+        }
+
+        function renderInfo() {
+            const title = currentData.title || currentData.name || 'Live Event';
+            document.getElementById('streamTitle').innerText = title;
+
+            if (itemType === 'banners') {
+                document.getElementById('tabChatText').innerText = "Comments";
+            } else {
+                document.getElementById('tabChatText').innerText = "Live Chat";
+            }
+
+            // Unlimited Dynamic Servers Setup
+            let servers = [];
+            if (currentData.servers && Array.isArray(currentData.servers) && currentData.servers.length > 0) {
+                currentData.servers.forEach((url, i) => {
+                    if (url) servers.push({ name: `Server ${i + 1}`, url: url });
+                });
+            } else {
+                if (currentData.targetUrl) servers.push({ name: 'Server 1', url: currentData.targetUrl });
+                if (currentData.server2) servers.push({ name: 'Server 2', url: currentData.server2 });
+                if (currentData.server3) servers.push({ name: 'Server 3', url: currentData.server3 });
+                if (currentData.server4) servers.push({ name: 'Server 4', url: currentData.server4 });
+            }
+
+            const srvBox = document.getElementById('serverButtons');
+            srvBox.innerHTML = '';
+
+            servers.forEach((srv, i) => {
+                const btn = document.createElement('button');
+                btn.className = `px-3 py-1 rounded-lg text-[10px] font-bold transition ${i === 0 ? 'bg-cyan-500 text-black' : 'bg-gray-900 text-gray-300 border border-gray-800'}`;
+                btn.innerText = srv.name;
+                btn.onclick = () => {
+                    document.querySelectorAll('#serverButtons button').forEach(b => b.className = 'px-3 py-1 rounded-lg text-[10px] font-bold transition bg-gray-900 text-gray-300 border border-gray-800');
+                    btn.className = 'px-3 py-1 rounded-lg text-[10px] font-bold transition bg-cyan-500 text-black';
+                    playSource(srv.url);
+                };
+                srvBox.appendChild(btn);
+            });
+
+            if (servers.length > 0 && !activeUrl) {
+                playSource(servers[0].url);
+            }
+        }
+
+        // Custom Player Implementation with Advanced HLS.js Config
+        const video = document.getElementById('videoPlayer');
+        const iframe = document.getElementById('iframePlayer');
+        const loader = document.getElementById('videoLoader');
+
+        function playSource(url) {
+            activeUrl = url;
+            loader.classList.remove('hidden');
+
+            const isEmbed = url.includes('embed') || url.includes('iframe') || (!url.includes('.m3u8') && !url.includes('.mp4') && !url.includes('http'));
+
+            if (isEmbed) {
+                if (hlsInstance) hlsInstance.destroy();
+                video.classList.add('hidden');
+                iframe.classList.remove('hidden');
+                iframe.src = url;
+                loader.classList.add('hidden');
+            } else {
+                iframe.classList.add('hidden');
+                iframe.src = '';
+                video.classList.remove('hidden');
+
+                if (Hls.isSupported() && url.includes('.m3u8')) {
+                    if (hlsInstance) hlsInstance.destroy();
+
+                    // Advanced High Performance HLS Configuration
+                    hlsInstance = new Hls({
+                        enableWorker: true,
+                        lowLatencyMode: true,
+                        backBufferLength: 90,
+                        maxBufferLength: 30,
+                        maxMaxBufferLength: 600,
+                        maxBufferSize: 60 * 1000 * 1000
+                    });
+
+                    hlsInstance.loadSource(url);
+                    hlsInstance.attachMedia(video);
+
+                    hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                        loader.classList.add('hidden');
+                        video.play().catch(() => {});
+                    });
+
+                    // Auto Network & Media Error Recovery
+                    hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+                        if (data.fatal) {
+                            switch (data.type) {
+                                case Hls.ErrorTypes.NETWORK_ERROR:
+                                    hlsInstance.startLoad();
+                                    break;
+                                case Hls.ErrorTypes.MEDIA_ERROR:
+                                    hlsInstance.recoverMediaError();
+                                    break;
+                                default:
+                                    hlsInstance.destroy();
+                                    break;
+                            }
+                        }
+                    });
+                } else {
+                    video.src = url;
+                    video.addEventListener('loadeddata', () => {
+                        loader.classList.add('hidden');
+                        video.play().catch(() => {});
+                    });
+                }
+            }
+        }
+
+        function reloadStream() {
+            if (activeUrl) playSource(activeUrl);
+        }
+
+        // Player Controls Logic
+        function togglePlay() {
+            if (video.paused) {
+                video.play();
+                document.getElementById('playIcon').className = "fa-solid fa-pause";
+                document.getElementById('bottomPlayIcon').className = "fa-solid fa-pause text-cyan-400";
+            } else {
+                video.pause();
+                document.getElementById('playIcon').className = "fa-solid fa-play ml-0.5";
+                document.getElementById('bottomPlayIcon').className = "fa-solid fa-play text-cyan-400";
+            }
+        }
+
+        function toggleMute() {
+            video.muted = !video.muted;
+            document.getElementById('muteIcon').className = video.muted ? "fa-solid fa-volume-xmark text-rose-500" : "fa-solid fa-volume-high";
+        }
+
+        function toggleFullscreen() {
+            const container = document.getElementById('playerContainer');
+            if (!document.fullscreenElement) {
+                if (container.requestFullscreen) container.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        video.addEventListener('timeupdate', () => {
+            const seekBar = document.getElementById('seekBar');
+            if(video.duration) {
+                seekBar.value = (video.currentTime / video.duration) * 100;
+                const m = Math.floor(video.currentTime / 60);
+                const s = Math.floor(video.currentTime % 60);
+                document.getElementById('timeDisplay').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            } else {
+                document.getElementById('timeDisplay').innerText = "LIVE";
+            }
+        });
+
+        document.getElementById('seekBar').addEventListener('input', (e) => {
+            if(video.duration) {
+                video.currentTime = (e.target.value / 100) * video.duration;
+            }
+        });
+
+        // Realtime Viewers Presence System (Real Unique User Tracking)
+        function setupPresenceAndLikes() {
+            const myViewerRef = db.ref(`viewers/${itemType}_${itemId}/${userId}`);
+            const viewersListRef = db.ref(`viewers/${itemType}_${itemId}`);
+
+            // Firebase এর নিজস্ব কানেকশন স্ট্যাটাস দিয়ে রিয়েল ভিউয়ার ট্র্যাকিং
+            db.ref('.info/connected').on('value', snap => {
+                if (snap.val() === true) {
+                    myViewerRef.onDisconnect().remove();
+                    myViewerRef.set({ onlineAt: firebase.database.ServerValue.TIMESTAMP });
+                }
+            });
+
+            // রিয়েলটাইম লাইভ ভিউয়ার কাউন্ট আপডেট
+            viewersListRef.on('value', snap => {
+                const count = snap.numChildren() || 1;
+                document.getElementById('realViewerCount').innerText = `${count} Watching`;
+            });
+
+            // লাইক সংখ্যা ফায়ারবেস থেকে পড়া
+            db.ref(`${itemType}/${itemId}/likes`).on('value', snap => {
+                document.getElementById('likeCountText').innerText = snap.val() || 0;
+            });
+
+            updateLikeUI();
+        }
+
+        // ১ জন ইউজার শুধু ১ বারই লাইক দিতে পারবে (Toggle System)
+        function handleLike() {
+            const likeKey = `liked_${itemType}_${itemId}`;
+            const hasLiked = localStorage.getItem(likeKey);
+
+            if (hasLiked) {
+                // যদি আগে লাইক দেওয়া থাকে, তাহলে লাইক কমে যাবে (Unlike)
+                db.ref(`${itemType}/${itemId}/likes`).transaction(c => Math.max(0, (c || 1) - 1));
+                localStorage.removeItem(likeKey);
+            } else {
+                // লাইক না দেওয়া থাকলে ১টি লাইক যোগ হবে
+                db.ref(`${itemType}/${itemId}/likes`).transaction(c => (c || 0) + 1);
+                localStorage.setItem(likeKey, 'true');
+            }
+            updateLikeUI();
+        }
+
+        // লাইক বাটনের কালার ও অবস্থা আপডেট
+        function updateLikeUI() {
+            const hasLiked = localStorage.getItem(`liked_${itemType}_${itemId}`);
+            const likeBtn = document.querySelector('button[onclick="handleLike()"]');
+            
+            if (likeBtn) {
+                if (hasLiked) {
+                    likeBtn.classList.add('bg-rose-500/20', 'border-rose-500/50');
+                } else {
+                    likeBtn.classList.remove('bg-rose-500/20', 'border-rose-500/50');
+                }
+            }
+        }
+
+        // Live Chat / Comments
+        function setupLiveChat() {
+            const chatBox = document.getElementById('chatMessages');
+            db.ref(`chats/${itemId}`).limitToLast(40).on('value', snap => {
+                chatBox.innerHTML = '';
+                const data = snap.val();
+                if (data) {
+                    Object.keys(data).forEach(k => {
+                        const msg = data[k];
+                        const initial = (msg.name || 'U').charAt(0).toUpperCase();
+                        chatBox.innerHTML += `
+                            <div class="flex items-start gap-2 bg-gray-900/80 p-2 rounded-xl border border-gray-800">
+                                <div class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 font-extrabold text-[10px] flex items-center justify-center shrink-0 border border-cyan-500/30">
+                                    ${initial}
+                                </div>
+                                <div class="overflow-hidden flex-1 space-y-0.5">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-bold text-[10px] text-cyan-400 truncate">${msg.name || 'Fan'}</span>
+                                        <span class="text-[8px] text-gray-500">${msg.time || ''}</span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-200 break-words">${msg.text}</p>
+                                </div>
+                            </div>`;
+                    });
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                } else {
+                    chatBox.innerHTML = `<p class="text-center text-gray-500 text-xs py-8">No messages yet. Start the conversation!</p>`;
+                }
+            });
+        }
+
+        function sendMessage(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('userNameInput');
+            const msgInput = document.getElementById('chatMessageInput');
+            const text = msgInput.value.trim();
+            const name = nameInput.value.trim() || 'Fan';
+
+            if (!text) return;
+
+            const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            db.ref(`chats/${itemId}`).push({
+                name: name,
+                text: text,
+                time: timeStr,
+                timestamp: Date.now()
+            });
+
+            msgInput.value = '';
+        }
+
+        // Tab Switching Logic
+        function switchTab(tabName) {
+            const btnChat = document.getElementById('tabBtnChat');
+            const btnSugg = document.getElementById('tabBtnSuggested');
+            const contentChat = document.getElementById('tabContentChat');
+            const contentSugg = document.getElementById('tabContentSuggested');
+
+            if (tabName === 'chat') {
+                btnChat.className = "flex-1 py-2 rounded-xl text-xs font-extrabold bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center gap-2";
+                btnSugg.className = "flex-1 py-2 rounded-xl text-xs font-extrabold bg-gray-900 border border-gray-800 text-gray-400 flex items-center justify-center gap-2";
+                contentChat.classList.remove('hidden');
+                contentSugg.classList.add('hidden');
+            } else {
+                btnSugg.className = "flex-1 py-2 rounded-xl text-xs font-extrabold bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center gap-2";
+                btnChat.className = "flex-1 py-2 rounded-xl text-xs font-extrabold bg-gray-900 border border-gray-800 text-gray-400 flex items-center justify-center gap-2";
+                contentSugg.classList.remove('hidden');
+                contentChat.classList.add('hidden');
+            }
+        }
+
+        // Suggested Stream Loader
+        function loadSuggested() {
+            const grid = document.getElementById('suggestedGrid');
+            db.ref(itemType).on('value', snap => {
+                grid.innerHTML = '';
+                const data = snap.val() || {};
+                let count = 0;
+
+                Object.keys(data).forEach(k => {
+                    if (k === itemId) return;
+                    count++;
+                    const item = data[k];
+
+                    let title = item.title || item.name || 'Live Match';
+                    let img = item.team1Logo || item.logo || item.image || 'https://via.placeholder.com/100';
+
+                    grid.innerHTML += `
+                        <div onclick="window.location.href='player.html?type=${itemType}&id=${k}'" class="slim-card rounded-2xl p-2.5 cursor-pointer flex items-center gap-3">
+                            <img src="${img}" class="w-10 h-10 rounded-xl object-cover bg-black border border-gray-800 shrink-0">
+                            <div class="overflow-hidden flex-1">
+                                <h3 class="font-bold text-xs text-gray-100 truncate">${title}</h3>
+                                <span class="text-[10px] text-cyan-400 font-bold block pt-0.5">Watch Live <i class="fa-solid fa-chevron-right text-[8px]"></i></span>
+                            </div>
+                        </div>`;
+                });
+
+                if (count === 0) {
+                    grid.innerHTML = `<p class="text-gray-500 text-xs text-center py-6">No suggestions available.</p>`;
+                }
+            });
+        }
+
+        // Share Card Modal Functions
+        function openShareModal() {
+            isShareOpen = true;
+            history.pushState({ modal: 'share' }, '');
+            document.getElementById('shareOverlay').classList.remove('hidden');
+            document.getElementById('shareModal').classList.remove('hidden');
+        }
+
+        function closeShareModal(pushHistory = true) {
+            isShareOpen = false;
+            document.getElementById('shareOverlay').classList.add('hidden');
+            document.getElementById('shareModal').classList.add('hidden');
+        }
+
+        function shareSocial(platform) {
+            const title = currentData ? (currentData.title || currentData.name || 'Live Sports') : 'CRICTON Live';
+            const pageUrl = window.location.href;
+            const text = `Watch ${title} Live on CRICTON:`;
+
+            let shareUrl = '';
+            if (platform === 'whatsapp') shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + pageUrl)}`;
+            if (platform === 'telegram') shareUrl = `https://t.me/share/url?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(text)}`;
+            if (platform === 'facebook') shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
+            if (platform === 'twitter') shareUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(text)}`;
+
+            if (shareUrl) window.open(shareUrl, '_blank');
+        }
+
+        function copyShareLink() {
+            navigator.clipboard.writeText(window.location.href);
+            const btnText = document.getElementById('copyBtnText');
+            btnText.innerText = "Link Copied!";
+            setTimeout(() => { btnText.innerText = "Copy Stream Link"; }, 2000);
+        }
+    </script>
+</body>
+</html>
