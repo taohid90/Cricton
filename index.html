@@ -34,6 +34,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="CRICTON">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3074/3074058.png">
+    <link rel="manifest" href="/manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -69,7 +70,10 @@
         <div id="notifList" class="space-y-2.5 max-h-60 overflow-y-auto no-scrollbar">
             <p class="text-xs text-gray-500 text-center py-4">Loading notifications...</p>
         </div>
-        <button onclick="toggleNotifModal(false)" class="w-full bg-cyan-500 text-black py-2.5 rounded-xl text-xs font-bold">Got it</button>
+        <button onclick="acceptPushPrompt(); toggleNotifModal(false);" class="w-full bg-cyan-500 hover:bg-cyan-400 text-black py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20">
+            <i class="fa-solid fa-bell animate-bounce"></i>
+            <span>Enable Live Match Alerts</span>
+        </button>
     </div>
 
     <div id="drawerOverlay" onclick="toggleDrawer(false)" class="fixed inset-0 bg-black/75 z-50 hidden transition-opacity"></div>
@@ -173,6 +177,28 @@
             </div>
         </div>
     </main>
+
+    <!-- Floating Web Push Subscription Bar -->
+    <div id="pushPromptBar" class="fixed bottom-16 left-4 right-4 max-w-md mx-auto bg-[#080b14]/95 border border-cyan-500/40 rounded-3xl p-3.5 z-50 shadow-2xl backdrop-blur-xl hidden transform transition-all duration-300">
+        <div class="flex items-center gap-3">
+            <img src="https://i.postimg.cc/J0LGtCmz/20260803-110152.jpg" alt="CRICTON Logo" class="w-12 h-12 rounded-2xl object-cover border border-cyan-500/40 shrink-0 shadow-md">
+            <div class="flex-1 overflow-hidden">
+                <h4 class="font-extrabold text-xs text-white tracking-wide flex items-center gap-1.5">
+                    <span>CRICTON Live Alerts</span>
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse inline-block"></span>
+                </h4>
+                <p class="text-[11px] text-gray-300 leading-tight mt-0.5">সব লাইভ ম্যাচ ও খেলার নোটিফিকেশন পেতে সাবস্ক্রাইব করুন!</p>
+            </div>
+            <button onclick="dismissPushPrompt()" class="text-gray-400 hover:text-white p-1 text-sm self-start"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex items-center gap-2 pt-2.5 border-t border-gray-800/80 mt-2.5">
+            <button onclick="dismissPushPrompt()" class="w-1/3 bg-gray-900 hover:bg-gray-800 text-gray-400 font-bold py-2 rounded-xl text-[11px] transition">Later</button>
+            <button onclick="acceptPushPrompt()" class="w-2/3 bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold py-2 rounded-xl text-[11px] uppercase tracking-wider transition shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-bell"></i>
+                <span>Subscribe</span>
+            </button>
+        </div>
+    </div>
 
     <nav class="fixed bottom-3 left-4 right-4 max-w-md mx-auto bg-[#080b14]/95 border border-gray-800/80 rounded-2xl px-6 py-2 flex justify-between items-center z-40 shadow-2xl backdrop-blur-lg">
         <button onclick="switchView('highlights')" id="nav-highlights" class="flex flex-col items-center gap-1 text-gray-400 hover:text-white transition px-2 py-1">
@@ -685,6 +711,85 @@
         }
 
         setInterval(() => { renderMatches(); }, 1000);
+
+        // ====================================================
+        // CRICTON AUTO BOTTOM PUSH PROMPT LOGIC
+        // ====================================================
+        const PUSH_SERVER_URL = "https://push-noti-ag1z.onrender.com";
+        const PUBLIC_VAPID_KEY = "YOUR_PUBLIC_VAPID_KEY_HERE"; // <--- আপনার Render ব্যাকএন্ডের Public VAPID Key বসান
+
+        function initPushPromptAuto() {
+            if (!('Notification' in window)) return;
+            const isDismissed = localStorage.getItem('cricton_push_dismissed');
+            
+            if (Notification.permission === 'default' && !isDismissed) {
+                setTimeout(() => {
+                    const promptBar = document.getElementById('pushPromptBar');
+                    if (promptBar) promptBar.classList.remove('hidden');
+                }, 1500); // ১.৫ সেকেন্ড পর ভেসে উঠবে
+            }
+        }
+
+        function dismissPushPrompt() {
+            const promptBar = document.getElementById('pushPromptBar');
+            if (promptBar) promptBar.classList.add('hidden');
+            localStorage.setItem('cricton_push_dismissed', Date.now().toString());
+        }
+
+        async function acceptPushPrompt() {
+            dismissPushPrompt();
+            await enablePushNotifications();
+        }
+
+        async function enablePushNotifications() {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                return;
+            }
+
+            try {
+                const register = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    console.log('Permission not granted');
+                    return;
+                }
+
+                let subscription = await register.pushManager.getSubscription();
+                if (!subscription) {
+                    subscription = await register.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
+                    });
+                }
+
+                await fetch(`${PUSH_SERVER_URL}/subscribe`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(subscription)
+                });
+
+                console.log('Push Subscribed Successfully!');
+
+            } catch (err) {
+                console.error('Push Error:', err);
+            }
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        window.addEventListener('load', () => {
+            initPushPromptAuto();
+        });
     </script>
 </body>
 </html>
