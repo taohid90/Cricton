@@ -49,6 +49,32 @@
             width: 100vw !important;
             height: 100vh !important;
         }
+
+        /* Floating Emoji Animation (Facebook Live Style) */
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) scale(0.6) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: translateY(-80px) scale(1.2) rotate(15deg);
+                opacity: 0.9;
+            }
+            100% {
+                transform: translateY(-180px) scale(1) rotate(-15deg);
+                opacity: 0;
+            }
+        }
+        .floating-emoji {
+            position: absolute;
+            bottom: 25px;
+            right: 20px;
+            font-size: 26px;
+            animation: floatUp 2.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            pointer-events: none;
+            z-index: 35;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+        }
     </style>
 </head>
 <body class="max-w-md mx-auto min-h-screen relative pb-12 border-x border-gray-900/60 flex flex-col">
@@ -116,6 +142,9 @@
 
             <!-- Iframe Player (For embed/iframe/page links) -->
             <iframe id="iframePlayer" class="w-full h-full hidden z-10" frameborder="0" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>
+
+            <!-- Floating Emoji Stream Overlay -->
+            <div id="emojiContainer" class="absolute inset-0 pointer-events-none overflow-hidden z-30"></div>
 
             <!-- Custom Controls Overlay (Only for Direct Video Stream) -->
             <div id="customControls" class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/40 transition-opacity duration-300 flex flex-col justify-between p-3 z-10 opacity-100">
@@ -194,17 +223,38 @@
             </button>
         </div>
 
+        <!-- Quick Floating Reaction Bar (Facebook Style Tap Bar) -->
+        <div class="flex items-center justify-around bg-[#0a0f1d]/90 backdrop-blur-md p-2 rounded-2xl border border-cyan-500/20 shadow-lg">
+            <button onclick="sendReaction('❤️')" class="hover:scale-125 active:scale-95 transition-transform text-xl p-1">❤️</button>
+            <button onclick="sendReaction('🔥')" class="hover:scale-125 active:scale-95 transition-transform text-xl p-1">🔥</button>
+            <button onclick="sendReaction('🏏')" class="hover:scale-125 active:scale-95 transition-transform text-xl p-1">🏏</button>
+            <button onclick="sendReaction('👏')" class="hover:scale-125 active:scale-95 transition-transform text-xl p-1">👏</button>
+            <button onclick="sendReaction('😮')" class="hover:scale-125 active:scale-95 transition-transform text-xl p-1">😮</button>
+            <button onclick="sendReaction('😂')" class="hover:scale-125 active:scale-95 transition-transform text-xl p-1">😂</button>
+            <button onclick="sendReaction('🎉')" class="hover:scale-125 active:scale-95 transition-transform text-xl p-1">🎉</button>
+        </div>
+
         <!-- Tab 1: Live Chat / Comments Section -->
-        <div id="tabContentChat" class="slim-card rounded-2xl p-3 space-y-2 flex-1 flex flex-col min-h-[250px]">
+        <div id="tabContentChat" class="slim-card rounded-2xl p-3 space-y-2.5 flex-1 flex flex-col min-h-[280px]">
+            
+            <!-- Quick Preset Message Tags -->
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-[10px]">
+                <button onclick="sendQuickMsg('SIXER! 🏏🔥')" class="shrink-0 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold px-2.5 py-1 rounded-full hover:bg-cyan-500/20">SIXER! 🏏</button>
+                <button onclick="sendQuickMsg('OUT! 💥')" class="shrink-0 bg-rose-500/10 border border-rose-500/30 text-rose-400 font-bold px-2.5 py-1 rounded-full hover:bg-rose-500/20">OUT! 💥</button>
+                <button onclick="sendQuickMsg('What a shot!! 😱')" class="shrink-0 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold px-2.5 py-1 rounded-full hover:bg-amber-500/20">What a shot! 😱</button>
+                <button onclick="sendQuickMsg('Come on!! 🙌')" class="shrink-0 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold px-2.5 py-1 rounded-full hover:bg-emerald-500/20">Come on! 🙌</button>
+            </div>
+
+            <!-- Chat Messages Box -->
             <div id="chatMessages" class="flex-1 overflow-y-auto space-y-2 max-h-56 pr-1 no-scrollbar text-xs">
                 <p class="text-center text-gray-500 text-xs py-8">Connecting Chat...</p>
             </div>
 
             <!-- Message Form -->
-            <form onsubmit="sendMessage(event)" class="flex items-center gap-2 pt-2 border-t border-gray-800">
-                <input type="text" id="userNameInput" placeholder="Name" class="w-20 bg-gray-900 border border-gray-800 text-white text-[11px] rounded-xl px-2 py-2 focus:outline-none focus:border-cyan-500 shrink-0">
-                <input type="text" id="chatMessageInput" placeholder="Type a message..." required class="flex-1 bg-gray-900 border border-gray-800 text-white text-[11px] rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500">
-                <button type="submit" class="bg-cyan-500 text-black px-3 py-2 rounded-xl text-xs font-bold hover:bg-cyan-400 transition shrink-0">
+            <form onsubmit="sendMessage(event)" class="flex items-center gap-2 pt-2 border-t border-gray-800/80">
+                <input type="text" id="userNameInput" placeholder="Name" class="w-20 bg-gray-900/90 border border-gray-800 text-white text-[11px] rounded-xl px-2.5 py-2 focus:outline-none focus:border-cyan-500 shrink-0">
+                <input type="text" id="chatMessageInput" placeholder="Say something..." required class="flex-1 bg-gray-900/90 border border-gray-800 text-white text-[11px] rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500">
+                <button type="submit" class="bg-gradient-to-r from-cyan-500 to-blue-500 text-black px-3.5 py-2 rounded-xl text-xs font-extrabold hover:opacity-90 transition shrink-0 shadow-lg shadow-cyan-500/20">
                     <i class="fa-solid fa-paper-plane"></i>
                 </button>
             </form>
@@ -352,6 +402,7 @@
                     if (!isSetupCompleted) {
                         setupPresenceAndLikes();
                         setupLiveChat();
+                        setupRealtimeReactions();
                         loadSuggested();
                         isSetupCompleted = true;
                     }
@@ -898,6 +949,60 @@
             const btnText = document.getElementById('copyBtnText');
             btnText.innerText = "Link Copied!";
             setTimeout(() => { btnText.innerText = "Copy Stream Link"; }, 2000);
+        }
+
+        // --- Realtime Floating Emoji System ---
+        function sendReaction(emoji) {
+            if (!itemId) return;
+            // Spawn locally immediately
+            spawnFloatingEmoji(emoji);
+
+            // Push to Firebase Realtime DB
+            db.ref(`reactions/${itemId}`).push({
+                emoji: emoji,
+                timestamp: Date.now()
+            });
+        }
+
+        function setupRealtimeReactions() {
+            if (!itemId) return;
+            // Listen for reactions from other active viewers
+            db.ref(`reactions/${itemId}`).limitToLast(1).on('child_added', snap => {
+                const data = snap.val();
+                if (data && data.timestamp > (Date.now() - 3000)) {
+                    spawnFloatingEmoji(data.emoji);
+                }
+            });
+        }
+
+        function spawnFloatingEmoji(emoji) {
+            const container = document.getElementById('emojiContainer');
+            if (!container) return;
+
+            const el = document.createElement('div');
+            el.className = 'floating-emoji';
+            el.innerText = emoji;
+
+            // Randomize X offset slightly for realistic effect
+            const randomX = Math.floor(Math.random() * 40) - 20; // -20px to +20px
+            el.style.right = (20 + randomX) + 'px';
+
+            container.appendChild(el);
+
+            // Auto clean up element after animation finishes
+            setTimeout(() => {
+                if (el && el.parentNode) {
+                    el.parentNode.removeChild(el);
+                }
+            }, 2200);
+        }
+
+        function sendQuickMsg(text) {
+            const input = document.getElementById('chatMessageInput');
+            if (input) {
+                input.value = text;
+                document.querySelector('#tabContentChat form').dispatchEvent(new Event('submit', { cancelable: true }));
+            }
         }
     </script>
 </body>
