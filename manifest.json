@@ -1,0 +1,24 @@
+{
+  "name": "Cricton - Live Sports Streaming",
+  "short_name": "Cricton",
+  "description": "Watch Live Cricket, Bangladesh Matches, Football World Cup & Sports TV Channels",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#05070d",
+  "theme_color": "#05070d",
+  "icons": [
+    {
+      "src": "https://i.postimg.cc/6q0pMkty/20260803-110152.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://i.postimg.cc/6q0pMkty/20260803-110152.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
