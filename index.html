@@ -39,6 +39,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap');
         body { background: #05070d; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; color: #f1f5f9; overflow-x: hidden; }
@@ -737,10 +738,18 @@
         setInterval(() => { renderMatches(); }, 1000);
 
         // ====================================================
-        // CRICTON AUTO BOTTOM PUSH PROMPT LOGIC
+        // CRICTON AUTO BOTTOM PUSH PROMPT LOGIC (FCM Web Push)
         // ====================================================
-        const PUSH_SERVER_URL = "https://push-noti-ag1z.onrender.com";
-        const PUBLIC_VAPID_KEY = "BIOLVuajQnXT7-Ggeg6X8Ryk_NzR4LY1OMnGg7FeJuzklsVBtRcUomIGSPUCtvp4jgVcRWgQLc7EZMSVn6rCCIE"; // <--- আপনার Render ব্যাকএন্ডের Public VAPID Key বসান
+        const FIREBASE_VAPID_KEY = "BIOLVuajQnXT7-Ggeg6X8Ryk_NzR4LY1OMnGg7FeJuzklsVBtRcUomIGSPUCtvp4jgVcRWgQLc7EZMSVn6rCCIE";
+        const messaging = firebase.messaging();
+
+        // Register Unified Service Worker (PWA + FCM)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+                messaging.useServiceWorker(registration);
+            }).catch(err => console.log('SW Reg Error:', err));
+        }
 
         function initPushPromptAuto() {
             if (!('Notification' in window)) return;
@@ -750,7 +759,7 @@
                 setTimeout(() => {
                     const promptBar = document.getElementById('pushPromptBar');
                     if (promptBar) promptBar.classList.remove('hidden');
-                }, 1500); // ১.৫ সেকেন্ড পর ভেসে উঠবে
+                }, 1500);
             }
         }
 
@@ -762,54 +771,32 @@
 
         async function acceptPushPrompt() {
             dismissPushPrompt();
-            await enablePushNotifications();
-        }
-
-        async function enablePushNotifications() {
-            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                return;
-            }
-
             try {
-                const register = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-                
                 const permission = await Notification.requestPermission();
-                if (permission !== 'granted') {
-                    console.log('Permission not granted');
-                    return;
+                if (permission === 'granted') {
+                    const token = await messaging.getToken({ vapidKey: FIREBASE_VAPID_KEY });
+                    if (token) {
+                        console.log('FCM Subscribed Token:', token);
+                        // Save subscriber token into Firebase Realtime DB
+                        const tokenKey = token.replace(/[.#$\[\]]/g, '_');
+                        db.ref('fcm_subscribers/' + tokenKey).set({
+                            token: token,
+                            subscribedAt: new Date().toISOString()
+                        });
+                    }
                 }
-
-                let subscription = await register.pushManager.getSubscription();
-                if (!subscription) {
-                    subscription = await register.pushManager.subscribe({
-                        userVisibleOnly: true,
-                        applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
-                    });
-                }
-
-                await fetch(`${PUSH_SERVER_URL}/subscribe`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(subscription)
-                });
-
-                console.log('Push Subscribed Successfully!');
-
-            } catch (err) {
-                console.error('Push Error:', err);
+            } catch (error) {
+                console.error('FCM Token Permission Error:', error);
             }
         }
 
-        function urlBase64ToUint8Array(base64String) {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-            const rawData = window.atob(base64);
-            const outputArray = new Uint8Array(rawData.length);
-            for (let i = 0; i < rawData.length; ++i) {
-                outputArray[i] = rawData.charCodeAt(i);
+        // Handle notifications when site is open in browser
+        messaging.onMessage((payload) => {
+            console.log('Foreground Message Received:', payload);
+            if (payload.notification) {
+                alert(`${payload.notification.title}\n${payload.notification.body}`);
             }
-            return outputArray;
-        }
+        });
 
         // PWA App Install Logic
         let deferredPrompt;
@@ -845,9 +832,6 @@
 
         window.addEventListener('load', () => {
             initPushPromptAuto();
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW Registration Error:', err));
-            }
         });
     </script>
 </body>
