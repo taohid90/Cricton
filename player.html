@@ -233,9 +233,42 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Retrieve Ads Config
+        // Dynamically Inject Global Popunder Code Function
+        function injectPopunderScript(code) {
+            if (!code || document.getElementById('cricton-popunder-holder')) return;
+            
+            const holder = document.createElement('div');
+            holder.id = 'cricton-popunder-holder';
+            holder.style.display = 'none';
+            holder.innerHTML = code;
+            
+            document.body.appendChild(holder);
+
+            // Re-create and execute any script tags in the code
+            const scripts = holder.getElementsByTagName('script');
+            for (let i = 0; i < scripts.length; i++) {
+                const newScript = document.createElement('script');
+                if (scripts[i].src) {
+                    newScript.src = scripts[i].src;
+                }
+                if (scripts[i].innerHTML) {
+                    newScript.innerHTML = scripts[i].innerHTML;
+                }
+                Array.from(scripts[i].attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                document.head.appendChild(newScript);
+            }
+        }
+
+        // Retrieve Ads Config & Inject Popunder Code
         let adsSettings = {};
-        db.ref("ads_config").on("value", snap => { adsSettings = snap.val() || {}; });
+        db.ref("ads_config").on("value", snap => { 
+            adsSettings = snap.val() || {}; 
+            
+            // Check if Global Ads are ON and Popunder Code exists
+            if (adsSettings.global_enabled !== false && adsSettings.popunder_code) {
+                injectPopunderScript(adsSettings.popunder_code);
+            }
+        });
 
         // Get Query Params
         const urlParams = new URLSearchParams(window.location.search);
