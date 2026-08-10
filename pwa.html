@@ -3,138 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRICTON - PWA Analytics Admin</title>
-    <meta name="theme-color" content="#05070d">
+    <title>CRICTON - Analytics Console</title>
+    <meta name="theme-color" content="#06080f">
+    
+    <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap');
-        body { background: #05070d; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #f1f5f9; }
-        .glass-card { background: rgba(11, 15, 25, 0.95); border: 1px solid rgba(56, 189, 248, 0.2); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body { 
+            background: #06080f; 
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; 
+            color: #e2e8f0; 
+            overflow-x: hidden; 
+        }
+
+        .console-card { 
+            background: #0d111d; 
+            border: 1px solid rgba(255, 255, 255, 0.07); 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); 
+            transition: border-color 0.2s ease, transform 0.15s ease;
+        }
+
+        .console-card:hover {
+            border-color: rgba(56, 189, 248, 0.25);
+        }
+
+        .console-modal { 
+            background: #090d16; 
+            backdrop-filter: blur(16px); 
+            border: 1px solid rgba(255, 255, 255, 0.12); 
+        }
+
+        .nav-tab {
+            color: #94a3b8;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .nav-tab:hover {
+            color: #f1f5f9;
+        }
+
+        .nav-tab.active {
+            color: #38bdf8;
+            border-bottom-color: #38bdf8;
+            font-weight: 700;
+        }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .section-view { display: none; }
+        .section-view.active { display: block; animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="max-w-4xl mx-auto min-h-screen p-4 space-y-5 pb-12">
+<body class="max-w-6xl mx-auto min-h-screen p-3 sm:p-6 space-y-6 pb-20">
 
-    <!-- Header -->
-    <header class="glass-card rounded-2xl p-4 flex items-center justify-between border-b border-gray-800">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-extrabold text-lg">
-                <i class="fa-solid fa-chart-line"></i>
+    <!-- Top Executive Header -->
+    <header class="console-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="flex items-center gap-3.5">
+            <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-cyan-400 font-bold text-base shadow-inner">
+                <i class="fa-solid fa-chart-simple"></i>
             </div>
             <div>
-                <h1 class="font-black text-base text-white tracking-wider">CRICTON Analytics</h1>
-                <p class="text-[11px] text-gray-400 font-semibold">PWA App Installation Overview</p>
+                <div class="flex items-center gap-2.5">
+                    <span class="font-extrabold text-base tracking-tight text-white">CRICTON</span>
+                    <span class="text-slate-700 font-normal text-xs">|</span>
+                    <span class="text-xs font-semibold text-slate-300">Analytics Console</span>
+                    <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Live Sync
+                    </span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-0.5">Realtime Audience Telemetry, PWA Deployments & Geo-Distribution</p>
             </div>
         </div>
-        <button onclick="location.reload()" class="bg-gray-900 border border-gray-800 hover:border-cyan-500 text-gray-300 p-2.5 rounded-xl transition text-xs flex items-center gap-1.5">
-            <i class="fa-solid fa-rotate-right text-cyan-400"></i>
-            <span class="hidden sm:inline font-bold">Refresh</span>
-        </button>
+
+        <div class="flex items-center gap-2.5 w-full md:w-auto justify-end">
+            <a href="index.html" target="_blank" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400"></i>
+                <span>Open App</span>
+            </a>
+            <button onclick="location.reload()" class="bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
+                <span>Refresh</span>
+            </button>
+        </div>
     </header>
 
-    <!-- Top Summary Stat Cards Grid -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <!-- Total Installs -->
-        <div class="glass-card rounded-2xl p-4 space-y-1 relative overflow-hidden">
-            <div class="flex justify-between items-center text-cyan-400">
-                <span class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Total Installs</span>
-                <i class="fa-solid fa-download text-xs"></i>
+    <!-- Executive Tab Navigation -->
+    <nav class="flex gap-6 border-b border-slate-800/80 px-2 overflow-x-auto no-scrollbar">
+        <button onclick="switchTab('overview')" id="tab-overview" class="nav-tab active py-3 text-xs flex items-center gap-2 shrink-0">
+            <i class="fa-solid fa-grip text-xs"></i> Executive Overview
+        </button>
+        <button onclick="switchTab('live')" id="tab-live" class="nav-tab py-3 text-xs flex items-center gap-2 shrink-0">
+            <i class="fa-solid fa-users text-xs text-rose-400"></i> Realtime Viewers & Geo
+        </button>
+        <button onclick="switchTab('pwa')" id="tab-pwa" class="nav-tab py-3 text-xs flex items-center gap-2 shrink-0">
+            <i class="fa-solid fa-download text-xs"></i> PWA Deployments
+        </button>
+        <button onclick="switchTab('engagement')" id="tab-engagement" class="nav-tab py-3 text-xs flex items-center gap-2 shrink-0">
+            <i class="fa-solid fa-stopwatch text-xs"></i> User Engagement & Stay Time
+        </button>
+    </nav>
+
+    <!-- SECTION 1: EXECUTIVE OVERVIEW -->
+    <section id="sec-overview" class="section-view active space-y-5">
+        <!-- Key Metrics Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+            <div onclick="switchTab('live')" class="console-card rounded-2xl p-4 space-y-1.5 cursor-pointer">
+                <div class="flex justify-between items-center text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                    <span>Active Online</span>
+                    <i class="fa-solid fa-signal text-rose-400 text-xs"></i>
+                </div>
+                <div id="overviewLiveCount" class="text-2xl font-extrabold text-white">0</div>
+                <div class="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-circle text-[6px]"></i> Live right now
+                </div>
             </div>
-            <div id="totalInstalls" class="text-2xl font-black text-cyan-400">0</div>
-            <p class="text-[9px] text-gray-500">All time installations</p>
-        </div>
 
-        <!-- Today's Installs -->
-        <div class="glass-card rounded-2xl p-4 space-y-1 relative overflow-hidden">
-            <div class="flex justify-between items-center text-emerald-400">
-                <span class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Today</span>
-                <i class="fa-solid fa-calendar-day text-xs"></i>
+            <div onclick="switchTab('pwa')" class="console-card rounded-2xl p-4 space-y-1.5 cursor-pointer">
+                <div class="flex justify-between items-center text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                    <span>Total Installs</span>
+                    <i class="fa-solid fa-download text-cyan-400 text-xs"></i>
+                </div>
+                <div id="overviewTotalInstalls" class="text-2xl font-extrabold text-white">0</div>
+                <div class="text-[10px] text-slate-400 font-medium">PWA Installed Base</div>
             </div>
-            <div id="todayInstalls" class="text-2xl font-black text-emerald-400">0</div>
-            <p class="text-[9px] text-gray-500">Installed today</p>
-        </div>
 
-        <!-- Android Installs -->
-        <div class="glass-card rounded-2xl p-4 space-y-1 relative overflow-hidden">
-            <div class="flex justify-between items-center text-purple-400">
-                <span class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Android</span>
-                <i class="fa-brands fa-android text-xs"></i>
+            <div onclick="switchTab('engagement')" class="console-card rounded-2xl p-4 space-y-1.5 cursor-pointer">
+                <div class="flex justify-between items-center text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                    <span>Avg Retention Time</span>
+                    <i class="fa-solid fa-clock text-emerald-400 text-xs"></i>
+                </div>
+                <div id="overviewAvgTime" class="text-2xl font-extrabold text-white">0m 0s</div>
+                <div class="text-[10px] text-slate-400 font-medium">Average session duration</div>
             </div>
-            <div id="androidInstalls" class="text-2xl font-black text-purple-400">0</div>
-            <p class="text-[9px] text-gray-500">Android App Users</p>
-        </div>
 
-        <!-- iOS / Other Installs -->
-        <div class="glass-card rounded-2xl p-4 space-y-1 relative overflow-hidden">
-            <div class="flex justify-between items-center text-blue-400">
-                <span class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">iOS / Desktop</span>
-                <i class="fa-solid fa-laptop-mobile text-xs"></i>
+            <div onclick="switchTab('live')" class="console-card rounded-2xl p-4 space-y-1.5 cursor-pointer">
+                <div class="flex justify-between items-center text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+                    <span>Primary Location</span>
+                    <i class="fa-solid fa-earth-asia text-purple-400 text-xs"></i>
+                </div>
+                <div id="overviewTopCountry" class="text-lg font-bold text-white truncate">Loading...</div>
+                <div class="text-[10px] text-slate-400 font-medium">Highest audience share</div>
             </div>
-            <div id="otherInstalls" class="text-2xl font-black text-blue-400">0</div>
-            <p class="text-[9px] text-gray-500">Apple & Desktop Users</p>
-        </div>
-    </div>
-
-    <!-- Date-wise Breakdown Table -->
-    <div class="glass-card rounded-2xl p-4 space-y-3">
-        <div class="flex items-center justify-between border-b border-gray-800 pb-2">
-            <h2 class="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-2">
-                <i class="fa-solid fa-calendar-days text-cyan-400"></i> Date-Wise Installation History
-            </h2>
-            <span class="text-[10px] text-gray-500 font-bold">DAILY STATS</span>
         </div>
 
-        <div class="overflow-x-auto no-scrollbar">
-            <table class="w-full text-left text-xs">
-                <thead>
-                    <tr class="text-gray-400 border-b border-gray-800/80 text-[10px] uppercase">
-                        <th class="py-2 px-3">Date</th>
-                        <th class="py-2 px-3 text-center">Installs Count</th>
-                        <th class="py-2 px-3 text-right">Progress Bar</th>
-                    </tr>
-                </thead>
-                <tbody id="dateWiseTableBody" class="divide-y divide-gray-800/50">
-                    <tr>
-                        <td colspan="3" class="text-center text-gray-500 py-6 text-xs">Loading Analytics Data...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+        <!-- Summary Split Columns -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Active Audience Locations -->
+            <div class="console-card rounded-2xl p-4 space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                    <h3 class="font-bold text-xs text-white tracking-wide uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-globe text-cyan-400"></i> Top Audience Geographies
+                    </h3>
+                    <button onclick="switchTab('live')" class="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold">Details <i class="fa-solid fa-chevron-right text-[8px] ml-0.5"></i></button>
+                </div>
+                <div id="overviewCountryList" class="space-y-2 text-xs">
+                    <p class="text-slate-500 text-center py-6 text-xs">Loading geo analytics...</p>
+                </div>
+            </div>
 
-    <!-- Detailed User Install Log Table -->
-    <div class="glass-card rounded-2xl p-4 space-y-3">
-        <div class="flex items-center justify-between border-b border-gray-800 pb-2">
-            <h2 class="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-2">
-                <i class="fa-solid fa-list-ul text-emerald-400"></i> Recent Installation Logs
-            </h2>
-            <span id="logCountBadge" class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">0 Records</span>
+            <!-- Recent Install Telemetry -->
+            <div class="console-card rounded-2xl p-4 space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+                    <h3 class="font-bold text-xs text-white tracking-wide uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-laptop-mobile text-emerald-400"></i> Recent PWA Deployments
+                    </h3>
+                    <button onclick="switchTab('pwa')" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold">Details <i class="fa-solid fa-chevron-right text-[8px] ml-0.5"></i></button>
+                </div>
+                <div id="overviewRecentInstalls" class="space-y-2 text-xs">
+                    <p class="text-slate-500 text-center py-6 text-xs">Fetching installation logs...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: REALTIME AUDIENCE & GEO -->
+    <section id="sec-live" class="section-view space-y-5">
+        <!-- Live Online Grid -->
+        <div class="console-card rounded-2xl p-4 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                    <h3 class="font-bold text-xs text-white uppercase tracking-wide">Active Online Viewers Right Now</h3>
+                </div>
+                <span id="liveBadgeCount" class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] px-2.5 py-0.5 rounded-full font-bold">0 Active</span>
+            </div>
+
+            <div id="liveOnlineGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
+                <p class="text-slate-500 text-xs text-center py-8 col-span-3">No active users online at the moment.</p>
+            </div>
         </div>
 
-        <div class="overflow-x-auto max-h-72 no-scrollbar">
-            <table class="w-full text-left text-xs">
-                <thead>
-                    <tr class="text-gray-400 border-b border-gray-800/80 text-[10px] uppercase sticky top-0 bg-[#080b14]">
-                        <th class="py-2 px-3">User ID</th>
-                        <th class="py-2 px-3">Device</th>
-                        <th class="py-2 px-3">Date</th>
-                        <th class="py-2 px-3 text-right">Time</th>
-                    </tr>
-                </thead>
-                <tbody id="installLogsBody" class="divide-y divide-gray-800/50 font-mono text-[11px]">
-                    <tr>
-                        <td colspan="4" class="text-center text-gray-500 py-6 text-xs font-sans">Connecting to Firebase...</td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- Audience Country Breakdown -->
+        <div class="console-card rounded-2xl p-4 space-y-3">
+            <div class="border-b border-slate-800 pb-2.5">
+                <h3 class="font-bold text-xs text-white uppercase tracking-wide">Country Wise Audience Share</h3>
+            </div>
+            <div id="countryBreakdownGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1"></div>
         </div>
+    </section>
+
+    <!-- SECTION 3: PWA DEPLOYMENTS -->
+    <section id="sec-pwa" class="section-view space-y-5">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+            <div class="console-card rounded-2xl p-4 space-y-1">
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Today's Installs</span>
+                <div id="pwaTodayCount" class="text-2xl font-bold text-emerald-400">0</div>
+            </div>
+            <div class="console-card rounded-2xl p-4 space-y-1">
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Android Platform</span>
+                <div id="pwaAndroidCount" class="text-2xl font-bold text-purple-400">0</div>
+            </div>
+            <div class="console-card rounded-2xl p-4 space-y-1">
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">iOS & Desktop</span>
+                <div id="pwaIosCount" class="text-2xl font-bold text-cyan-400">0</div>
+            </div>
+        </div>
+
+        <!-- Datewise Installs Table -->
+        <div class="console-card rounded-2xl p-4 space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
+                <h3 class="font-bold text-xs text-white uppercase tracking-wide">Installation Logs by Date</h3>
+                <span class="text-[10px] text-slate-400">Click date row to view log details</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="text-slate-400 border-b border-slate-800 text-[10px] uppercase font-semibold">
+                            <th class="py-2.5 px-3">Date</th>
+                            <th class="py-2.5 px-3 text-center">Installs</th>
+                            <th class="py-2.5 px-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pwaDateTableBody" class="divide-y divide-slate-800/60"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4: USER ENGAGEMENT & RETENTION -->
+    <section id="sec-engagement" class="section-view space-y-5">
+        <div class="console-card rounded-2xl p-4 space-y-3">
+            <div class="border-b border-slate-800 pb-2.5">
+                <h3 class="font-bold text-xs text-white uppercase tracking-wide">Countries Ranking by Stay Duration</h3>
+            </div>
+            <div id="countryStayTimeList" class="space-y-2 pt-1"></div>
+        </div>
+
+        <div class="console-card rounded-2xl p-4 space-y-3">
+            <div class="border-b border-slate-800 pb-2.5">
+                <h3 class="font-bold text-xs text-white uppercase tracking-wide">Recent Session Duration Logs</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="text-slate-400 border-b border-slate-800 text-[10px] uppercase font-semibold">
+                            <th class="py-2.5 px-3">User Reference ID</th>
+                            <th class="py-2.5 px-3">Location</th>
+                            <th class="py-2.5 px-3">Platform</th>
+                            <th class="py-2.5 px-3 text-right">Session Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userSessionTableBody" class="divide-y divide-slate-800/60"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Detailed Interactive Preview Modal -->
+    <div id="detailModalOverlay" onclick="closeDetailModal()" class="fixed inset-0 bg-black/80 z-50 hidden transition-opacity backdrop-blur-sm"></div>
+    <div id="detailModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-lg console-modal rounded-3xl p-5 z-50 hidden shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3 shrink-0">
+            <h3 id="modalTitle" class="font-bold text-sm text-white flex items-center gap-2">Telemetry Detail Preview</h3>
+            <button onclick="closeDetailModal()" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="modalBody" class="overflow-y-auto no-scrollbar space-y-2 text-xs flex-1 pr-1"></div>
     </div>
 
     <script>
-        // Firebase Config (Same as site)
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyD_HBGuQSh_GzqrHqHbgdaoBikLZsK3Qqs",
             authDomain: "new-all-f99f7.firebaseapp.com",
@@ -151,111 +306,345 @@
 
         const todayStr = new Date().toISOString().split('T')[0];
 
-        // Realtime Data Fetching
-        db.ref('pwa_analytics/installs_log').on('value', snap => {
-            const data = snap.val() || {};
-            const keys = Object.keys(data);
-            
-            let totalCount = keys.length;
-            let todayCount = 0;
-            let androidCount = 0;
-            let otherCount = 0;
+        // Executive Tab Navigation Switcher
+        function switchTab(tabName) {
+            document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
 
-            const dateWiseMap = {};
-            const logsList = [];
+            document.getElementById('sec-' + tabName).classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
 
-            keys.forEach(k => {
-                const item = data[k];
-                const d = item.install_date || 'Unknown';
+        // Format Duration to Reader Friendly
+        function formatDuration(secs) {
+            if (!secs || isNaN(secs)) return '0s';
+            const m = Math.floor(secs / 60);
+            const s = secs % 60;
+            if (m >= 60) {
+                const h = Math.floor(m / 60);
+                const remM = m % 60;
+                return `${h}h ${remM}m`;
+            }
+            return `${m}m ${s}s`;
+        }
 
-                // Counts
-                if (d === todayStr) todayCount++;
-                if (item.device === 'Android') androidCount++;
-                else otherCount++;
+        let globalInstalls = {};
+        let globalLiveOnline = {};
+        let globalEngagement = {};
 
-                // Datewise Grouping
-                dateWiseMap[d] = (dateWiseMap[d] || 0) + 1;
-
-                logsList.push({
-                    id: k,
-                    date: item.install_date || 'N/A',
-                    time: item.install_time || 'N/A',
-                    device: item.device || 'Unknown',
-                    timestamp: item.timestamp || 0
-                });
-            });
-
-            // Update Top Summary Cards
-            document.getElementById('totalInstalls').innerText = totalCount;
-            document.getElementById('todayInstalls').innerText = todayCount;
-            document.getElementById('androidInstalls').innerText = androidCount;
-            document.getElementById('otherInstalls').innerText = otherCount;
-            document.getElementById('logCountBadge').innerText = `${totalCount} Records`;
-
-            // Render Date-wise Table
-            renderDateTable(dateWiseMap, totalCount);
-
-            // Render Detailed Logs
-            renderLogsTable(logsList);
+        // Realtime Firebase DB Sync Listeners
+        db.ref('analytics/live_online').on('value', snap => {
+            globalLiveOnline = snap.val() || {};
+            renderLiveOnlineSection();
+            updateOverview();
         });
 
-        function renderDateTable(dateMap, total) {
-            const tbody = document.getElementById('dateWiseTableBody');
+        db.ref('pwa_analytics/installs_log').on('value', snap => {
+            globalInstalls = snap.val() || {};
+            renderPwaSection();
+            updateOverview();
+        });
+
+        db.ref('analytics/user_engagement').on('value', snap => {
+            globalEngagement = snap.val() || {};
+            renderEngagementSection();
+            updateOverview();
+        });
+
+        function updateOverview() {
+            const liveKeys = Object.keys(globalLiveOnline);
+            document.getElementById('overviewLiveCount').innerText = liveKeys.length;
+
+            const installKeys = Object.keys(globalInstalls);
+            document.getElementById('overviewTotalInstalls').innerText = installKeys.length;
+
+            const countryCounts = {};
+            let totalStaySecs = 0;
+            let engagementCount = 0;
+
+            Object.keys(globalEngagement).forEach(k => {
+                const item = globalEngagement[k];
+                if (item.country) countryCounts[item.country] = (countryCounts[item.country] || 0) + 1;
+                if (item.duration_secs) {
+                    totalStaySecs += item.duration_secs;
+                    engagementCount++;
+                }
+            });
+
+            const avgSecs = engagementCount > 0 ? Math.floor(totalStaySecs / engagementCount) : 0;
+            document.getElementById('overviewAvgTime').innerText = formatDuration(avgSecs);
+
+            let topC = 'N/A';
+            let maxCount = 0;
+            Object.keys(countryCounts).forEach(c => {
+                if (countryCounts[c] > maxCount) {
+                    maxCount = countryCounts[c];
+                    topC = c;
+                }
+            });
+            document.getElementById('overviewTopCountry').innerText = topC;
+
+            // Render Overview Geographies List
+            const cListEl = document.getElementById('overviewCountryList');
+            cListEl.innerHTML = '';
+            const sortedCountries = Object.keys(countryCounts).sort((a,b) => countryCounts[b] - countryCounts[a]).slice(0, 5);
+
+            if (sortedCountries.length === 0) {
+                cListEl.innerHTML = `<p class="text-slate-500 text-center py-6 text-xs">No audience location recorded yet.</p>`;
+            } else {
+                sortedCountries.forEach(c => {
+                    cListEl.innerHTML += `
+                        <div class="flex items-center justify-between bg-slate-900/70 p-2.5 rounded-xl border border-slate-800/80">
+                            <span class="font-semibold text-slate-200">${c}</span>
+                            <span class="text-cyan-400 font-bold">${countryCounts[c]} Audience</span>
+                        </div>`;
+                });
+            }
+
+            // Render Overview Deployments List
+            const rInstEl = document.getElementById('overviewRecentInstalls');
+            rInstEl.innerHTML = '';
+            const recentKeys = Object.keys(globalInstalls).slice(-5).reverse();
+
+            if (recentKeys.length === 0) {
+                rInstEl.innerHTML = `<p class="text-slate-500 text-center py-6 text-xs">No installation logs captured.</p>`;
+            } else {
+                recentKeys.forEach(k => {
+                    const item = globalInstalls[k];
+                    const flagImg = item.flag ? `<img src="${item.flag}" class="w-4 h-3 inline rounded-sm mr-1.5">` : '';
+                    rInstEl.innerHTML += `
+                        <div class="flex items-center justify-between bg-slate-900/70 p-2.5 rounded-xl border border-slate-800/80">
+                            <div class="flex items-center gap-1">
+                                ${flagImg}
+                                <span class="font-semibold text-slate-200">${item.country || 'Global'}</span>
+                            </div>
+                            <span class="text-emerald-400 font-medium text-[11px]">${item.install_date || ''}</span>
+                        </div>`;
+                });
+            }
+        }
+
+        function renderPwaSection() {
+            const keys = Object.keys(globalInstalls);
+            let todayCount = 0, androidCount = 0, iosCount = 0;
+            const dateMap = {};
+
+            keys.forEach(k => {
+                const item = globalInstalls[k];
+                const d = item.install_date || 'Unknown';
+
+                if (d === todayStr) todayCount++;
+                if (item.device === 'Android') androidCount++;
+                else iosCount++;
+
+                dateMap[d] = (dateMap[d] || 0) + 1;
+            });
+
+            document.getElementById('pwaTodayCount').innerText = todayCount;
+            document.getElementById('pwaAndroidCount').innerText = androidCount;
+            document.getElementById('pwaIosCount').innerText = iosCount;
+
+            const tbody = document.getElementById('pwaDateTableBody');
             tbody.innerHTML = '';
 
             const sortedDates = Object.keys(dateMap).sort().reverse();
-
             if (sortedDates.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-gray-500 py-6 text-xs">No installation records found yet.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-slate-500 py-6 text-xs">No deployment history logged.</td></tr>`;
                 return;
             }
 
             sortedDates.forEach(date => {
                 const count = dateMap[date];
-                const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
-                const isToday = (date === todayStr);
-
                 tbody.innerHTML += `
-                    <tr class="${isToday ? 'bg-cyan-500/10 font-bold' : 'hover:bg-gray-900/50'} transition">
-                        <td class="py-2.5 px-3 flex items-center gap-2">
-                            <span>${date}</span>
-                            ${isToday ? '<span class="bg-cyan-500 text-black text-[8px] font-black px-1.5 py-0.5 rounded uppercase">Today</span>' : ''}
-                        </td>
-                        <td class="py-2.5 px-3 text-center font-bold text-cyan-400">${count} Installs</td>
+                    <tr onclick="openDateDetailModal('${date}')" class="hover:bg-slate-900/60 cursor-pointer transition">
+                        <td class="py-2.5 px-3 font-semibold text-slate-200">${date}</td>
+                        <td class="py-2.5 px-3 text-center font-extrabold text-cyan-400">${count}</td>
                         <td class="py-2.5 px-3 text-right">
-                            <div class="w-24 sm:w-36 bg-gray-900 border border-gray-800 rounded-full h-2 inline-block overflow-hidden">
-                                <div class="bg-cyan-400 h-full rounded-full" style="width: ${Math.max(percentage, 5)}%"></div>
-                            </div>
+                            <button class="bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 px-2.5 py-1 rounded-lg text-[10px] font-bold transition">View Logs <i class="fa-solid fa-chevron-right text-[8px] ml-0.5"></i></button>
                         </td>
                     </tr>`;
             });
         }
 
-        function renderLogsTable(logs) {
-            const tbody = document.getElementById('installLogsBody');
+        function renderLiveOnlineSection() {
+            const keys = Object.keys(globalLiveOnline);
+            document.getElementById('liveBadgeCount').innerText = `${keys.length} Active`;
+
+            const grid = document.getElementById('liveOnlineGrid');
+            grid.innerHTML = '';
+
+            const countryAgg = {};
+
+            if (keys.length === 0) {
+                grid.innerHTML = `<p class="text-slate-500 text-xs text-center py-8 col-span-3">No live viewers connected currently.</p>`;
+            } else {
+                keys.forEach(k => {
+                    const u = globalLiveOnline[k];
+                    const country = u.country || 'Unknown';
+                    const flagImg = u.flag ? `<img src="${u.flag}" class="w-4 h-3 inline rounded-sm mr-1.5">` : '';
+
+                    countryAgg[country] = (countryAgg[country] || 0) + 1;
+
+                    grid.innerHTML += `
+                        <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 space-y-1.5">
+                            <div class="flex items-center justify-between text-[10px]">
+                                <span class="font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></span> Active
+                                </span>
+                                <span class="text-slate-500">${u.page || 'Home'}</span>
+                            </div>
+                            <div class="flex items-center justify-between font-semibold text-xs text-slate-200">
+                                <div>${flagImg}${country}</div>
+                                <div class="text-cyan-400 font-mono text-[10px]">${formatDuration(u.session_duration_secs || 0)}</div>
+                            </div>
+                        </div>`;
+                });
+            }
+
+            const cGrid = document.getElementById('countryBreakdownGrid');
+            cGrid.innerHTML = '';
+            const sortedCountries = Object.keys(countryAgg).sort((a,b) => countryAgg[b] - countryAgg[a]);
+
+            if (sortedCountries.length === 0) {
+                cGrid.innerHTML = `<p class="text-slate-500 text-xs text-center py-6 col-span-2">No location share available.</p>`;
+            } else {
+                sortedCountries.forEach(c => {
+                    cGrid.innerHTML += `
+                        <div onclick="openCountryDetailModal('${c}')" class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex items-center justify-between cursor-pointer hover:border-cyan-500/30 transition">
+                            <span class="font-semibold text-slate-200">${c}</span>
+                            <span class="bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-2.5 py-1 rounded-xl text-xs font-bold">${countryAgg[c]} Active</span>
+                        </div>`;
+                });
+            }
+        }
+
+        function renderEngagementSection() {
+            const countryStayMap = {};
+            const countryUserCount = {};
+            const sessionList = [];
+
+            Object.keys(globalEngagement).forEach(k => {
+                const item = globalEngagement[k];
+                const country = item.country || 'Unknown';
+                const secs = item.duration_secs || 0;
+
+                countryStayMap[country] = (countryStayMap[country] || 0) + secs;
+                countryUserCount[country] = (countryUserCount[country] || 0) + 1;
+
+                sessionList.push(item);
+            });
+
+            const stayListEl = document.getElementById('countryStayTimeList');
+            stayListEl.innerHTML = '';
+
+            const sortedCountries = Object.keys(countryStayMap).sort((a,b) => {
+                const avgA = countryStayMap[a] / countryUserCount[a];
+                const avgB = countryStayMap[b] / countryUserCount[b];
+                return avgB - avgA;
+            });
+
+            if (sortedCountries.length === 0) {
+                stayListEl.innerHTML = `<p class="text-slate-500 text-xs text-center py-6">No session duration data captured.</p>`;
+            } else {
+                sortedCountries.forEach((c, idx) => {
+                    const avgSecs = Math.floor(countryStayMap[c] / countryUserCount[c]);
+                    stayListEl.innerHTML += `
+                        <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-2.5">
+                                <span class="w-5 h-5 rounded-md bg-slate-800 text-slate-300 font-bold text-[10px] flex items-center justify-center">#${idx+1}</span>
+                                <span class="font-semibold text-slate-200">${c}</span>
+                            </div>
+                            <div class="text-emerald-400 font-semibold font-mono">Avg Session: ${formatDuration(avgSecs)}</div>
+                        </div>`;
+                });
+            }
+
+            const tbody = document.getElementById('userSessionTableBody');
             tbody.innerHTML = '';
 
-            // Sort Logs by newest timestamp
-            logs.sort((a, b) => b.timestamp - a.timestamp);
+            sessionList.sort((a,b) => (b.duration_secs || 0) - (a.duration_secs || 0));
 
-            if (logs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-gray-500 py-6 text-xs font-sans">No user logs recorded.</td></tr>`;
+            if (sessionList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-slate-500 py-6 text-xs">No session duration records.</td></tr>`;
                 return;
             }
 
-            logs.forEach(log => {
-                const deviceBadge = log.device === 'Android' 
-                    ? '<span class="text-purple-400 bg-purple-500/10 border border-purple-500/30 px-1.5 py-0.5 rounded text-[9px]"><i class="fa-brands fa-android mr-1"></i>Android</span>'
-                    : '<span class="text-blue-400 bg-blue-500/10 border border-blue-500/30 px-1.5 py-0.5 rounded text-[9px]"><i class="fa-solid fa-mobile-screen mr-1"></i>iOS/PC</span>';
-
+            sessionList.slice(0, 15).forEach(s => {
+                const flagImg = s.flag ? `<img src="${s.flag}" class="w-4 h-3 inline rounded-sm mr-1.5">` : '';
                 tbody.innerHTML += `
-                    <tr class="hover:bg-gray-900/50 transition">
-                        <td class="py-2 px-3 text-gray-300 font-semibold truncate max-w-[100px]">${log.id}</td>
-                        <td class="py-2 px-3">${deviceBadge}</td>
-                        <td class="py-2 px-3 text-gray-400">${log.date}</td>
-                        <td class="py-2 px-3 text-right text-gray-400">${log.time}</td>
+                    <tr class="hover:bg-slate-900/50 transition font-mono text-[11px]">
+                        <td class="py-2.5 px-3 text-cyan-400 font-medium truncate max-w-[130px]">${s.user_id || 'Unknown'}</td>
+                        <td class="py-2.5 px-3 text-slate-200 font-sans">${flagImg}${s.country || 'Global'}</td>
+                        <td class="py-2.5 px-3 text-slate-400 font-sans">${s.device || 'Mobile'}</td>
+                        <td class="py-2.5 px-3 text-right font-bold text-emerald-400">${formatDuration(s.duration_secs || 0)}</td>
                     </tr>`;
             });
+        }
+
+        // Preview Modal Functions
+        function openDateDetailModal(date) {
+            document.getElementById('modalTitle').innerText = `PWA Install Logs: ${date}`;
+            const body = document.getElementById('modalBody');
+            body.innerHTML = '';
+
+            const logs = Object.keys(globalInstalls)
+                .map(k => globalInstalls[k])
+                .filter(item => item.install_date === date);
+
+            if (logs.length === 0) {
+                body.innerHTML = `<p class="text-slate-500 text-center py-6">No logs for this date.</p>`;
+            } else {
+                logs.forEach(item => {
+                    const flagImg = item.flag ? `<img src="${item.flag}" class="w-4 h-3 inline rounded-sm mr-1.5">` : '';
+                    body.innerHTML += `
+                        <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 space-y-1">
+                            <div class="flex justify-between font-semibold text-slate-200">
+                                <span>${flagImg}${item.country || 'Global'} (${item.city || 'City'})</span>
+                                <span class="text-cyan-400 font-mono">${item.install_time || ''}</span>
+                            </div>
+                            <div class="text-[10px] text-slate-500 font-mono">ID: ${item.user_id} | Platform: ${item.device}</div>
+                        </div>`;
+                });
+            }
+
+            showDetailModal();
+        }
+
+        function openCountryDetailModal(country) {
+            document.getElementById('modalTitle').innerText = `Audience Share: ${country}`;
+            const body = document.getElementById('modalBody');
+            body.innerHTML = '';
+
+            const users = Object.keys(globalEngagement)
+                .map(k => globalEngagement[k])
+                .filter(item => item.country === country);
+
+            if (users.length === 0) {
+                body.innerHTML = `<p class="text-slate-500 text-center py-6">No records for this country.</p>`;
+            } else {
+                users.forEach(u => {
+                    body.innerHTML += `
+                        <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 space-y-1">
+                            <div class="flex justify-between font-semibold text-slate-200">
+                                <span class="font-mono text-cyan-400">${u.user_id}</span>
+                                <span class="text-emerald-400 font-mono">${formatDuration(u.duration_secs || 0)}</span>
+                            </div>
+                            <div class="text-[10px] text-slate-500">Platform: ${u.device || 'Mobile'} | Date: ${u.date || ''}</div>
+                        </div>`;
+                });
+            }
+
+            showDetailModal();
+        }
+
+        function showDetailModal() {
+            document.getElementById('detailModal').classList.remove('hidden');
+            document.getElementById('detailModalOverlay').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+            document.getElementById('detailModalOverlay').classList.add('hidden');
         }
     </script>
 </body>
