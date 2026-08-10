@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRICTON - PWA Analytics Admin</title>
+    <meta name="theme-color" content="#05070d">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap');
+        body { background: #05070d; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #f1f5f9; }
+        .glass-card { background: rgba(11, 15, 25, 0.95); border: 1px solid rgba(56, 189, 248, 0.2); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="max-w-4xl mx-auto min-h-screen p-4 space-y-5 pb-12">
+
+    <!-- Header -->
+    <header class="glass-card rounded-2xl p-4 flex items-center justify-between border-b border-gray-800">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 font-extrabold text-lg">
+                <i class="fa-solid fa-chart-line"></i>
+            </div>
+            <div>
+                <h1 class="font-black text-base text-white tracking-wider">CRICTON Analytics</h1>
+                <p class="text-[11px] text-gray-400 font-semibold">PWA App Installation Overview</p>
+            </div>
+        </div>
+        <button onclick="location.reload()" class="bg-gray-900 border border-gray-800 hover:border-cyan-500 text-gray-300 p-2.5 rounded-xl transition text-xs flex items-center gap-1.5">
+            <i class="fa-solid fa-rotate-right text-cyan-400"></i>
+            <span class="hidden sm:inline font-bold">Refresh</span>
+        </button>
+    </header>
+
+    <!-- Top Summary Stat Cards Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <!-- Total Installs -->
+        <div class="glass-card rounded-2xl p-4 space-y-1 relative overflow-hidden">
+            <div class="flex justify-between items-center text-cyan-400">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Total Installs</span>
+                <i class="fa-solid fa-download text-xs"></i>
+            </div>
+            <div id="totalInstalls" class="text-2xl font-black text-cyan-400">0</div>
+            <p class="text-[9px] text-gray-500">All time installations</p>
+        </div>
+
+        <!-- Today's Installs -->
+        <div class="glass-card rounded-2xl p-4 space-y-1 relative overflow-hidden">
+            <div class="flex justify-between items-center text-emerald-400">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Today</span>
+                <i class="fa-solid fa-calendar-day text-xs"></i>
+            </div>
+            <div id="todayInstalls" class="text-2xl font-black text-emerald-400">0</div>
+            <p class="text-[9px] text-gray-500">Installed today</p>
+        </div>
+
+        <!-- Android Installs -->
+        <div class="glass-card rounded-2xl p-4 space-y-1 relative overflow-hidden">
+            <div class="flex justify-between items-center text-purple-400">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">Android</span>
+                <i class="fa-brands fa-android text-xs"></i>
+            </div>
+            <div id="androidInstalls" class="text-2xl font-black text-purple-400">0</div>
+            <p class="text-[9px] text-gray-500">Android App Users</p>
+        </div>
+
+        <!-- iOS / Other Installs -->
+        <div class="glass-card rounded-2xl p-4 space-y-1 relative overflow-hidden">
+            <div class="flex justify-between items-center text-blue-400">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider text-gray-400">iOS / Desktop</span>
+                <i class="fa-solid fa-laptop-mobile text-xs"></i>
+            </div>
+            <div id="otherInstalls" class="text-2xl font-black text-blue-400">0</div>
+            <p class="text-[9px] text-gray-500">Apple & Desktop Users</p>
+        </div>
+    </div>
+
+    <!-- Date-wise Breakdown Table -->
+    <div class="glass-card rounded-2xl p-4 space-y-3">
+        <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+            <h2 class="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-calendar-days text-cyan-400"></i> Date-Wise Installation History
+            </h2>
+            <span class="text-[10px] text-gray-500 font-bold">DAILY STATS</span>
+        </div>
+
+        <div class="overflow-x-auto no-scrollbar">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="text-gray-400 border-b border-gray-800/80 text-[10px] uppercase">
+                        <th class="py-2 px-3">Date</th>
+                        <th class="py-2 px-3 text-center">Installs Count</th>
+                        <th class="py-2 px-3 text-right">Progress Bar</th>
+                    </tr>
+                </thead>
+                <tbody id="dateWiseTableBody" class="divide-y divide-gray-800/50">
+                    <tr>
+                        <td colspan="3" class="text-center text-gray-500 py-6 text-xs">Loading Analytics Data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Detailed User Install Log Table -->
+    <div class="glass-card rounded-2xl p-4 space-y-3">
+        <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+            <h2 class="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-list-ul text-emerald-400"></i> Recent Installation Logs
+            </h2>
+            <span id="logCountBadge" class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">0 Records</span>
+        </div>
+
+        <div class="overflow-x-auto max-h-72 no-scrollbar">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="text-gray-400 border-b border-gray-800/80 text-[10px] uppercase sticky top-0 bg-[#080b14]">
+                        <th class="py-2 px-3">User ID</th>
+                        <th class="py-2 px-3">Device</th>
+                        <th class="py-2 px-3">Date</th>
+                        <th class="py-2 px-3 text-right">Time</th>
+                    </tr>
+                </thead>
+                <tbody id="installLogsBody" class="divide-y divide-gray-800/50 font-mono text-[11px]">
+                    <tr>
+                        <td colspan="4" class="text-center text-gray-500 py-6 text-xs font-sans">Connecting to Firebase...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Config (Same as site)
+        const firebaseConfig = {
+            apiKey: "AIzaSyD_HBGuQSh_GzqrHqHbgdaoBikLZsK3Qqs",
+            authDomain: "new-all-f99f7.firebaseapp.com",
+            databaseURL: "https://new-all-f99f7-default-rtdb.firebaseio.com",
+            projectId: "new-all-f99f7",
+            storageBucket: "new-all-f99f7.firebasestorage.app",
+            messagingSenderId: "1069748173900",
+            appId: "1:1069748173900:web:158d6336c0f4628133c8e9",
+            measurementId: "G-V6DZ37WSBF"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        // Realtime Data Fetching
+        db.ref('pwa_analytics/installs_log').on('value', snap => {
+            const data = snap.val() || {};
+            const keys = Object.keys(data);
+            
+            let totalCount = keys.length;
+            let todayCount = 0;
+            let androidCount = 0;
+            let otherCount = 0;
+
+            const dateWiseMap = {};
+            const logsList = [];
+
+            keys.forEach(k => {
+                const item = data[k];
+                const d = item.install_date || 'Unknown';
+
+                // Counts
+                if (d === todayStr) todayCount++;
+                if (item.device === 'Android') androidCount++;
+                else otherCount++;
+
+                // Datewise Grouping
+                dateWiseMap[d] = (dateWiseMap[d] || 0) + 1;
+
+                logsList.push({
+                    id: k,
+                    date: item.install_date || 'N/A',
+                    time: item.install_time || 'N/A',
+                    device: item.device || 'Unknown',
+                    timestamp: item.timestamp || 0
+                });
+            });
+
+            // Update Top Summary Cards
+            document.getElementById('totalInstalls').innerText = totalCount;
+            document.getElementById('todayInstalls').innerText = todayCount;
+            document.getElementById('androidInstalls').innerText = androidCount;
+            document.getElementById('otherInstalls').innerText = otherCount;
+            document.getElementById('logCountBadge').innerText = `${totalCount} Records`;
+
+            // Render Date-wise Table
+            renderDateTable(dateWiseMap, totalCount);
+
+            // Render Detailed Logs
+            renderLogsTable(logsList);
+        });
+
+        function renderDateTable(dateMap, total) {
+            const tbody = document.getElementById('dateWiseTableBody');
+            tbody.innerHTML = '';
+
+            const sortedDates = Object.keys(dateMap).sort().reverse();
+
+            if (sortedDates.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-gray-500 py-6 text-xs">No installation records found yet.</td></tr>`;
+                return;
+            }
+
+            sortedDates.forEach(date => {
+                const count = dateMap[date];
+                const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+                const isToday = (date === todayStr);
+
+                tbody.innerHTML += `
+                    <tr class="${isToday ? 'bg-cyan-500/10 font-bold' : 'hover:bg-gray-900/50'} transition">
+                        <td class="py-2.5 px-3 flex items-center gap-2">
+                            <span>${date}</span>
+                            ${isToday ? '<span class="bg-cyan-500 text-black text-[8px] font-black px-1.5 py-0.5 rounded uppercase">Today</span>' : ''}
+                        </td>
+                        <td class="py-2.5 px-3 text-center font-bold text-cyan-400">${count} Installs</td>
+                        <td class="py-2.5 px-3 text-right">
+                            <div class="w-24 sm:w-36 bg-gray-900 border border-gray-800 rounded-full h-2 inline-block overflow-hidden">
+                                <div class="bg-cyan-400 h-full rounded-full" style="width: ${Math.max(percentage, 5)}%"></div>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function renderLogsTable(logs) {
+            const tbody = document.getElementById('installLogsBody');
+            tbody.innerHTML = '';
+
+            // Sort Logs by newest timestamp
+            logs.sort((a, b) => b.timestamp - a.timestamp);
+
+            if (logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-gray-500 py-6 text-xs font-sans">No user logs recorded.</td></tr>`;
+                return;
+            }
+
+            logs.forEach(log => {
+                const deviceBadge = log.device === 'Android' 
+                    ? '<span class="text-purple-400 bg-purple-500/10 border border-purple-500/30 px-1.5 py-0.5 rounded text-[9px]"><i class="fa-brands fa-android mr-1"></i>Android</span>'
+                    : '<span class="text-blue-400 bg-blue-500/10 border border-blue-500/30 px-1.5 py-0.5 rounded text-[9px]"><i class="fa-solid fa-mobile-screen mr-1"></i>iOS/PC</span>';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-900/50 transition">
+                        <td class="py-2 px-3 text-gray-300 font-semibold truncate max-w-[100px]">${log.id}</td>
+                        <td class="py-2 px-3">${deviceBadge}</td>
+                        <td class="py-2 px-3 text-gray-400">${log.date}</td>
+                        <td class="py-2 px-3 text-right text-gray-400">${log.time}</td>
+                    </tr>`;
+            });
+        }
+    </script>
+</body>
+</html>
