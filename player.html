@@ -5,13 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRICTON - Live Stream</title>
     <meta name="theme-color" content="#05070d">
+    
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Advanced HLS.js -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <!-- Firebase Compat SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap');
         body { background: #05070d; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #f1f5f9; overflow-x: hidden; }
@@ -53,12 +57,12 @@
 </head>
 <body class="max-w-md mx-auto min-h-screen relative pb-12 border-x border-gray-900/60 flex flex-col">
 
-    <!-- PWA Installation Guide Modal -->
+    <!-- PWA Installation Guide Modal (Fallback) -->
     <div id="pwaGuideOverlay" onclick="closePwaGuide()" class="fixed inset-0 bg-black/80 z-50 hidden transition-opacity backdrop-blur-sm"></div>
     <div id="pwaGuideModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-xs glass-modal rounded-3xl p-5 z-50 hidden shadow-2xl space-y-4 border border-cyan-500/30">
         <div class="flex justify-between items-center border-b border-gray-800 pb-3">
             <div class="flex items-center gap-2">
-                <img src="https://i.postimg.cc/6q0pMkty/20260803-110152.jpg" class="w-6 h-6 rounded-full">
+                <img src="https://i.postimg.cc/6q0pMkty/20260803-110152.jpg" class="w-6 h-6 rounded-full" alt="logo">
                 <h3 class="font-bold text-xs text-white uppercase tracking-wider">Install Cricton App</h3>
             </div>
             <button onclick="closePwaGuide()" class="text-gray-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
@@ -83,7 +87,6 @@
             <button onclick="closeShareModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
         
-        <!-- Social Share Grid -->
         <div class="grid grid-cols-4 gap-3 text-center pt-1">
             <button onclick="shareSocial('whatsapp')" class="flex flex-col items-center gap-1.5 p-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 transition">
                 <i class="fa-brands fa-whatsapp text-2xl"></i>
@@ -108,9 +111,8 @@
         </button>
     </div>
 
-    <!-- Header Navigation (Clean Install Button - No Animation) -->
+    <!-- Header Navigation -->
     <header class="bg-[#070912]/95 backdrop-blur-xl px-4 py-2.5 flex items-center justify-between sticky top-0 z-40 border-b border-gray-800/80 shadow-2xl">
-        <!-- Left: Sleek Back Icon + Metallic Logo -->
         <div class="flex items-center gap-3">
             <button onclick="goBack()" class="w-9 h-9 rounded-2xl bg-gray-900/90 border border-gray-800 flex items-center justify-center text-gray-300 hover:text-white hover:border-cyan-500/50 active:scale-90 transition shadow-inner">
                 <i class="fa-solid fa-chevron-left text-xs"></i>
@@ -121,7 +123,6 @@
             </span>
         </div>
 
-        <!-- Right: Modern Install Pill (No Bounce) + Share Button -->
         <div class="flex items-center gap-2">
             <button id="installAppBtn" onclick="installPWA()" class="bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 px-3.5 py-1.5 rounded-2xl text-xs font-black flex items-center gap-1.5 shadow-lg shadow-cyan-500/20 active:scale-95 transition tracking-wide">
                 <i class="fa-solid fa-download text-xs"></i>
@@ -144,16 +145,23 @@
                 <span class="text-xs text-gray-400 font-bold tracking-wide">Connecting Live Stream...</span>
             </div>
 
-            <!-- HTML5 Video Element -->
+            <!-- Tap to Play Overlay (Shown ONLY if browser blocks unmuted autoplay) -->
+            <div id="tapToPlayOverlay" onclick="forcePlayWithSound()" class="absolute inset-0 bg-black/80 backdrop-blur-sm z-30 hidden flex flex-col items-center justify-center gap-3 cursor-pointer">
+                <div class="w-14 h-14 rounded-full bg-cyan-500 text-black flex items-center justify-center text-xl shadow-xl shadow-cyan-500/40 animate-pulse">
+                    <i class="fa-solid fa-play ml-1"></i>
+                </div>
+                <span class="text-xs font-bold text-cyan-300 tracking-wider uppercase">Tap to Watch with Sound</span>
+            </div>
+
+            <!-- HTML5 Video Element (Unmuted by Default) -->
             <video id="videoPlayer" onclick="togglePlay()" class="w-full h-full object-contain cursor-pointer" playsinline crossorigin="anonymous"></video>
 
-            <!-- Iframe Player (For embed/iframe/page links) -->
+            <!-- Iframe Player -->
             <iframe id="iframePlayer" class="w-full h-full hidden z-10" frameborder="0" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>
 
-            <!-- Custom Controls Overlay (Only for Direct Video Stream) -->
+            <!-- Custom Controls Overlay -->
             <div id="customControls" class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/40 transition-opacity duration-300 flex flex-col justify-between p-3 z-10 opacity-100">
                 
-                <!-- Player Top Info Bar -->
                 <div class="flex items-center justify-between pointer-events-auto">
                     <span id="playerLiveBadge" class="bg-rose-600 text-white font-extrabold text-[9px] px-2 py-0.5 rounded-md flex items-center gap-1 uppercase tracking-wider">
                         <span class="w-1.5 h-1.5 bg-white rounded-full animate-ping"></span> LIVE
@@ -161,12 +169,10 @@
                     <button onclick="reloadStream()" class="text-gray-300 hover:text-cyan-400 text-xs bg-black/60 p-1.5 rounded-lg border border-gray-800"><i class="fa-solid fa-rotate-right"></i></button>
                 </div>
 
-                <!-- Center Play/Pause Button -->
                 <button onclick="togglePlay()" class="pointer-events-auto self-center w-12 h-12 rounded-full bg-cyan-500/90 text-black flex items-center justify-center text-lg shadow-lg shadow-cyan-500/30 hover:scale-110 transition">
                     <i id="playIcon" class="fa-solid fa-play ml-0.5"></i>
                 </button>
 
-                <!-- Bottom Control Bar -->
                 <div class="space-y-1.5 pointer-events-auto">
                     <input type="range" id="seekBar" min="0" value="0" step="0.1" class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan-400">
                     <div class="flex items-center justify-between text-[11px] font-bold text-gray-300">
@@ -193,12 +199,10 @@
     <!-- Details & Tab Section -->
     <main class="p-3 space-y-3 flex-1 flex flex-col">
 
-        <!-- Stream Title & Live Watchers -->
         <div class="slim-card rounded-2xl p-3 space-y-2">
             <h1 id="streamTitle" class="text-xs font-extrabold text-white leading-snug">Loading Event...</h1>
             
             <div class="flex items-center justify-between text-xs pt-2 border-t border-gray-800/80">
-                <!-- Realtime Viewer Presence -->
                 <div class="flex items-center gap-1.5 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/30">
                     <span class="relative flex h-2 w-2">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -207,7 +211,6 @@
                     <span id="realViewerCount" class="text-rose-400 font-bold text-[10px] tracking-wider uppercase">1 Watching</span>
                 </div>
 
-                <!-- Like Button -->
                 <button onclick="handleLike()" class="flex items-center gap-1.5 bg-gray-900 px-3 py-1 rounded-xl border border-gray-800 text-gray-200 hover:text-rose-400 transition">
                     <i class="fa-solid fa-heart text-rose-500 text-xs"></i>
                     <span id="likeCountText" class="text-[11px] font-bold">0</span>
@@ -215,7 +218,7 @@
             </div>
         </div>
 
-        <!-- Navigation Tabs (Chat / Suggested) -->
+        <!-- Navigation Tabs -->
         <div class="flex gap-2 border-b border-gray-800/80 pb-2">
             <button id="tabBtnChat" onclick="switchTab('chat')" class="flex-1 py-2 rounded-xl text-xs font-extrabold bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center gap-2">
                 <i id="tabChatIcon" class="fa-solid fa-comments"></i>
@@ -227,13 +230,12 @@
             </button>
         </div>
 
-        <!-- Tab 1: Live Chat / Comments Section -->
+        <!-- Tab 1: Live Chat -->
         <div id="tabContentChat" class="slim-card rounded-2xl p-3 space-y-2 flex-1 flex flex-col min-h-[250px]">
             <div id="chatMessages" class="flex-1 overflow-y-auto space-y-2 max-h-56 pr-1 no-scrollbar text-xs">
                 <p class="text-center text-gray-500 text-xs py-8">Connecting Chat...</p>
             </div>
 
-            <!-- Message Form -->
             <form onsubmit="sendMessage(event)" class="flex items-center gap-2 pt-2 border-t border-gray-800">
                 <input type="text" id="userNameInput" placeholder="Name" class="w-20 bg-gray-900 border border-gray-800 text-white text-[11px] rounded-xl px-2 py-2 focus:outline-none focus:border-cyan-500 shrink-0">
                 <input type="text" id="chatMessageInput" placeholder="Type a message..." required class="flex-1 bg-gray-900 border border-gray-800 text-white text-[11px] rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500">
@@ -251,7 +253,16 @@
     </main>
 
     <script>
-        // Firebase Config
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker Registered Successfully'))
+                    .catch(err => console.log('Service Worker Registration Failed:', err));
+            });
+        }
+
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyD_HBGuQSh_GzqrHqHbgdaoBikLZsK3Qqs",
             authDomain: "new-all-f99f7.firebaseapp.com",
@@ -266,7 +277,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Dynamically Inject Global Popunder Code Function
+        // Safe Dynamic Script Injector
         function injectPopunderScript(code) {
             if (!code || document.getElementById('cricton-popunder-holder')) return;
             
@@ -274,36 +285,30 @@
             holder.id = 'cricton-popunder-holder';
             holder.style.display = 'none';
             holder.innerHTML = code;
-            
             document.body.appendChild(holder);
 
-            // Re-create and execute any script tags in the code
             const scripts = holder.getElementsByTagName('script');
             for (let i = 0; i < scripts.length; i++) {
-                const newScript = document.createElement('script');
-                if (scripts[i].src) {
-                    newScript.src = scripts[i].src;
+                try {
+                    const newScript = document.createElement('script');
+                    if (scripts[i].src) newScript.src = scripts[i].src;
+                    if (scripts[i].innerHTML) newScript.innerHTML = scripts[i].innerHTML;
+                    Array.from(scripts[i].attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    document.head.appendChild(newScript);
+                } catch(e) {
+                    console.error("Ad script injection error:", e);
                 }
-                if (scripts[i].innerHTML) {
-                    newScript.innerHTML = scripts[i].innerHTML;
-                }
-                Array.from(scripts[i].attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                document.head.appendChild(newScript);
             }
         }
 
-        // Retrieve Ads Config & Inject Popunder Code
         let adsSettings = {};
         db.ref("ads_config").on("value", snap => { 
             adsSettings = snap.val() || {}; 
-            
-            // Check if Global Ads are ON and Popunder Code exists
             if (adsSettings.global_enabled !== false && adsSettings.popunder_code) {
                 injectPopunderScript(adsSettings.popunder_code);
             }
         });
 
-        // Get Query Params
         const urlParams = new URLSearchParams(window.location.search);
         const itemType = urlParams.get('type') || 'matches';
         const itemId = urlParams.get('id');
@@ -313,7 +318,6 @@
         let hlsInstance = null;
         let isShareOpen = false;
 
-        // Mobile Hardware Back Button
         window.addEventListener('popstate', (e) => {
             if (isShareOpen) {
                 closeShareModal(false);
@@ -322,17 +326,13 @@
             }
         });
 
-        function goBack() {
-            window.location.href = 'index.html';
-        }
+        function goBack() { window.location.href = 'index.html'; }
 
-        // Accurate Date Parsing & Status Calculation Logic
         function parseMatchDate(dateStr) {
             if (!dateStr) return null;
             let d = new Date(dateStr);
             if (!isNaN(d.getTime())) return d;
-            let t = dateStr.replace(/-/g, '/');
-            d = new Date(t);
+            d = new Date(dateStr.replace(/-/g, '/'));
             if (!isNaN(d.getTime())) return d;
             return null;
         }
@@ -348,17 +348,11 @@
             const start = startObj ? startObj.getTime() : null;
             const end = endObj ? endObj.getTime() : null;
 
-            if (end && now >= (end + 5 * 60 * 1000)) {
-                return { status: 'DELETED' };
-            }
-
-            if (end && now >= end && now < (end + 5 * 60 * 1000)) {
-                return { status: 'ENDED', text: 'Match Ended' };
-            }
+            if (end && now >= (end + 5 * 60 * 1000)) return { status: 'DELETED' };
+            if (end && now >= end && now < (end + 5 * 60 * 1000)) return { status: 'ENDED', text: 'Match Ended' };
 
             if (start && end && now >= start && now <= end) {
-                const elapsedMs = now - start;
-                const totalSecs = Math.floor(elapsedMs / 1000);
+                const totalSecs = Math.floor((now - start) / 1000);
                 const hrs = Math.floor(totalSecs / 3600);
                 const mins = Math.floor((totalSecs % 3600) / 60);
                 const secs = totalSecs % 60;
@@ -383,16 +377,14 @@
                 } else if (days >= 1) {
                     return { status: 'UPCOMING', text: `Starts in ${days} day${days > 1 ? 's' : ''}` };
                 } else {
-                    const remHours = hours % 24;
-                    const remMins = totalMins % 60;
-                    return { status: 'UPCOMING', text: `Starts in ${remHours}h ${remMins}m` };
+                    return { status: 'UPCOMING', text: `Starts in ${hours % 24}h ${totalMins % 60}m` };
                 }
             }
 
             return { status: 'UPCOMING', text: startStr || 'Scheduled' };
         }
 
-        // Unique User Setup
+        // User Identity Setup
         if (!localStorage.getItem('cricton_user_id')) {
             localStorage.setItem('cricton_user_id', 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now());
         }
@@ -401,13 +393,16 @@
         if (!localStorage.getItem('cricton_user_name')) {
             localStorage.setItem('cricton_user_name', 'Fan_' + Math.floor(1000 + Math.random() * 9000));
         }
-        document.getElementById('userNameInput').value = localStorage.getItem('cricton_user_name');
+        
+        const nameInput = document.getElementById('userNameInput');
+        nameInput.value = localStorage.getItem('cricton_user_name');
+        
+        const saveUserName = () => {
+            if(nameInput.value.trim()) localStorage.setItem('cricton_user_name', nameInput.value.trim());
+        };
+        nameInput.addEventListener('change', saveUserName);
+        nameInput.addEventListener('blur', saveUserName);
 
-        document.getElementById('userNameInput').addEventListener('change', (e) => {
-            if(e.target.value.trim()) localStorage.setItem('cricton_user_name', e.target.value.trim());
-        });
-
-        // Load Content Data
         let isSetupCompleted = false;
 
         if (itemId) {
@@ -430,19 +425,11 @@
         function renderInfo() {
             const title = currentData.title || currentData.name || 'Live Event';
             document.getElementById('streamTitle').innerText = title;
+            document.getElementById('tabChatText').innerText = (itemType === 'banners') ? "Comments" : "Live Chat";
 
-            if (itemType === 'banners') {
-                document.getElementById('tabChatText').innerText = "Comments";
-            } else {
-                document.getElementById('tabChatText').innerText = "Live Chat";
-            }
-
-            // Unlimited Dynamic Servers Setup
             let servers = [];
             if (currentData.servers && Array.isArray(currentData.servers) && currentData.servers.length > 0) {
-                currentData.servers.forEach((url, i) => {
-                    if (url) servers.push({ name: `Server ${i + 1}`, url: url });
-                });
+                currentData.servers.forEach((url, i) => { if (url) servers.push({ name: `Server ${i + 1}`, url: url }); });
             } else {
                 if (currentData.targetUrl) servers.push({ name: 'Server 1', url: currentData.targetUrl });
                 if (currentData.server2) servers.push({ name: 'Server 2', url: currentData.server2 });
@@ -470,7 +457,6 @@
             }
         }
 
-        // Smart Stream Type Detector (Direct Stream vs Embed/Iframe Link)
         function isDirectVideoUrl(url) {
             if (!url) return false;
             const u = url.trim().toLowerCase();
@@ -480,13 +466,14 @@
         const video = document.getElementById('videoPlayer');
         const iframe = document.getElementById('iframePlayer');
         const loader = document.getElementById('videoLoader');
+        const tapOverlay = document.getElementById('tapToPlayOverlay');
         const customControls = document.getElementById('customControls');
         let controlsHideTimeout = null;
 
-        // Auto Sync Play/Pause Icons
         video.addEventListener('play', () => {
             document.getElementById('playIcon').className = "fa-solid fa-pause";
             document.getElementById('bottomPlayIcon').className = "fa-solid fa-pause text-cyan-400";
+            tapOverlay.classList.add('hidden');
         });
 
         video.addEventListener('pause', () => {
@@ -509,15 +496,15 @@
             }
         }
 
-        // Universal Play Engine (Supports All Link Formats)
+        // Unmuted Video Player Core Engine
         function playSource(url) {
             activeUrl = url;
             loader.classList.remove('hidden');
+            tapOverlay.classList.add('hidden');
 
             const directStream = isDirectVideoUrl(url);
 
             if (!directStream) {
-                // Embed / Iframe Page Link
                 if (hlsInstance) hlsInstance.destroy();
                 video.pause();
                 video.classList.add('hidden');
@@ -527,11 +514,13 @@
                 iframe.src = url;
                 loader.classList.add('hidden');
             } else {
-                // Direct Video Stream (.m3u8 / .mp4)
                 iframe.classList.add('hidden');
                 iframe.src = '';
                 video.classList.remove('hidden');
                 customControls.classList.remove('hidden');
+
+                // UNMUTED Play Strategy
+                video.muted = false;
 
                 if (Hls.isSupported() && url.includes('.m3u8')) {
                     if (hlsInstance) hlsInstance.destroy();
@@ -548,22 +537,15 @@
 
                     hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
                         loader.classList.add('hidden');
-                        video.play().catch(() => {});
-                        userActivityTrigger();
+                        executeUnmutedPlay();
                     });
 
                     hlsInstance.on(Hls.Events.ERROR, (event, data) => {
                         if (data.fatal) {
                             switch (data.type) {
-                                case Hls.ErrorTypes.NETWORK_ERROR:
-                                    hlsInstance.startLoad();
-                                    break;
-                                case Hls.ErrorTypes.MEDIA_ERROR:
-                                    hlsInstance.recoverMediaError();
-                                    break;
-                                default:
-                                    hlsInstance.destroy();
-                                    break;
+                                case Hls.ErrorTypes.NETWORK_ERROR: hlsInstance.startLoad(); break;
+                                case Hls.ErrorTypes.MEDIA_ERROR: hlsInstance.recoverMediaError(); break;
+                                default: hlsInstance.destroy(); break;
                             }
                         }
                     });
@@ -571,11 +553,30 @@
                     video.src = url;
                     video.addEventListener('loadeddata', () => {
                         loader.classList.add('hidden');
-                        video.play().catch(() => {});
-                        userActivityTrigger();
-                    });
+                        executeUnmutedPlay();
+                    }, { once: true });
                 }
             }
+        }
+
+        function executeUnmutedPlay() {
+            video.muted = false;
+            const playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    tapOverlay.classList.add('hidden');
+                    userActivityTrigger();
+                }).catch(err => {
+                    console.warn("Autoplay blocked without user gesture. Showing Tap Overlay.");
+                    tapOverlay.classList.remove('hidden');
+                });
+            }
+        }
+
+        function forcePlayWithSound() {
+            tapOverlay.classList.add('hidden');
+            video.muted = false;
+            video.play().then(() => userActivityTrigger()).catch(() => {});
         }
 
         function reloadStream() {
@@ -584,7 +585,7 @@
 
         function togglePlay() {
             if (video.paused) {
-                video.play();
+                executeUnmutedPlay();
             } else {
                 video.pause();
             }
@@ -611,7 +612,9 @@
                     if (screen.orientation && screen.orientation.lock) {
                         await screen.orientation.lock('landscape').catch(() => {});
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.log("Fullscreen request error:", e);
+                }
             } else {
                 try {
                     if (document.exitFullscreen) {
@@ -640,30 +643,33 @@
             }
         }
 
+        // Live Safe Seekbar Fix
         video.addEventListener('timeupdate', () => {
             const seekBar = document.getElementById('seekBar');
-            if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
+            const timeDisplay = document.getElementById('timeDisplay');
+
+            if (video.duration && isFinite(video.duration) && video.duration > 0) {
                 const percent = (video.currentTime / video.duration) * 100;
                 seekBar.value = percent;
                 seekBar.style.background = `linear-gradient(to right, #38bdf8 ${percent}%, #1e293b ${percent}%)`;
                 
                 const m = Math.floor(video.currentTime / 60);
                 const s = Math.floor(video.currentTime % 60);
-                document.getElementById('timeDisplay').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                timeDisplay.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
             } else {
                 seekBar.value = 100;
                 seekBar.style.background = `#38bdf8`;
-                document.getElementById('timeDisplay').innerText = "LIVE";
+                timeDisplay.innerText = "LIVE";
             }
         });
 
         document.getElementById('seekBar').addEventListener('input', (e) => {
-            if (video.duration && !isNaN(video.duration) && isFinite(video.duration)) {
+            if (video.duration && isFinite(video.duration) && video.duration > 0) {
                 video.currentTime = (e.target.value / 100) * video.duration;
             }
         });
 
-        // Realtime Viewers Presence System
+        // Presence & Likes Setup
         function setupPresenceAndLikes() {
             const myViewerRef = db.ref(`viewers/${itemType}_${itemId}/${userId}`);
             const viewersListRef = db.ref(`viewers/${itemType}_${itemId}`);
@@ -714,7 +720,7 @@
             }
         }
 
-        // Live Chat / Comments
+        // Live Chat Setup
         function setupLiveChat() {
             const chatBox = document.getElementById('chatMessages');
             db.ref(`chats/${itemId}`).limitToLast(40).on('value', snap => {
@@ -747,10 +753,9 @@
 
         function sendMessage(e) {
             e.preventDefault();
-            const nameInput = document.getElementById('userNameInput');
             const msgInput = document.getElementById('chatMessageInput');
             const text = msgInput.value.trim();
-            const name = nameInput.value.trim() || 'Fan';
+            const name = document.getElementById('userNameInput').value.trim() || 'Fan';
 
             if (!text) return;
 
@@ -766,7 +771,6 @@
             msgInput.value = '';
         }
 
-        // Tab Switching Logic
         function switchTab(tabName) {
             const btnChat = document.getElementById('tabBtnChat');
             const btnSugg = document.getElementById('tabBtnSuggested');
@@ -786,7 +790,6 @@
             }
         }
 
-        // Suggested Stream Loader (Fixed Live vs Scheduled Status Logic)
         function loadSuggested() {
             const grid = document.getElementById('suggestedGrid');
             db.ref(itemType).on('value', snap => {
@@ -794,11 +797,7 @@
                 const data = snap.val() || {};
                 let count = 0;
 
-                if (itemType === 'channels') {
-                    grid.className = "grid grid-cols-3 gap-2.5 pt-1";
-                } else {
-                    grid.className = "space-y-2.5";
-                }
+                grid.className = (itemType === 'channels') ? "grid grid-cols-3 gap-2.5 pt-1" : "space-y-2.5";
 
                 Object.keys(data).forEach(k => {
                     if (k === itemId) return;
@@ -904,12 +903,10 @@
             });
         }
 
-        // Click Handler with Ad Logic
         function openItemWithAds(type, key) {
             db.ref(`${type}/${key}/clicks`).transaction(c => (c || 0) + 1);
 
             const targetPlayerUrl = `player.html?type=${type}&id=${key}`;
-
             const itemAdConf = (adsSettings[type] && adsSettings[type][key]) ? adsSettings[type][key] : {};
             const isGlobalAdOn = adsSettings.global_enabled !== false;
             const isItemAdOn = itemAdConf.enabled !== false;
@@ -923,9 +920,7 @@
 
             if (isGlobalAdOn && isItemAdOn && adUrl && (now - lastClickTime >= cooldownMs)) {
                 localStorage.setItem(lastClickKey, now.toString());
-                sessionStorage.setItem('cricton_pending_stream', targetPlayerUrl);
-                window.location.href = adUrl;
-                return;
+                window.open(adUrl, '_blank');
             }
 
             window.location.href = targetPlayerUrl;
@@ -966,8 +961,8 @@
             setTimeout(() => { btnText.innerText = "Copy Stream Link"; }, 2000);
         }
 
-        // PWA App Install Logic
-        let deferredPrompt;
+        // Native PWA Install Handler
+        let deferredPrompt = null;
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -988,13 +983,13 @@
         }
 
         function showPwaGuide() {
-            document.getElementById('pwaGuideModal')?.classList.remove('hidden');
-            document.getElementById('pwaGuideOverlay')?.classList.remove('hidden');
+            document.getElementById('pwaGuideModal').classList.remove('hidden');
+            document.getElementById('pwaGuideOverlay').classList.remove('hidden');
         }
 
         function closePwaGuide() {
-            document.getElementById('pwaGuideModal')?.classList.add('hidden');
-            document.getElementById('pwaGuideOverlay')?.classList.add('hidden');
+            document.getElementById('pwaGuideModal').classList.add('hidden');
+            document.getElementById('pwaGuideOverlay').classList.add('hidden');
         }
     </script>
 </body>
