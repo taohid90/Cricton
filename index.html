@@ -924,6 +924,100 @@ function recordPwaInstall() {
 
     db.ref(`pwa_analytics/daily_counts/${dateStr}/${uId}`).set(true);
 }
+        // Geo Location & Advanced Analytics Tracker
+async function getUserGeoLocation() {
+    if (localStorage.getItem('cricton_user_geo')) {
+        return JSON.parse(localStorage.getItem('cricton_user_geo'));
+    }
+    try {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        const geo = {
+            country: data.country_name || 'Unknown',
+            country_code: data.country_code || 'UN',
+            city: data.city || 'Unknown',
+            flag: data.country_code ? `https://flagcdn.com/24x18/${data.country_code.toLowerCase()}.png` : ''
+        };
+        localStorage.setItem('cricton_user_geo', JSON.stringify(geo));
+        return geo;
+    } catch(e) {
+        return { country: 'Unknown', country_code: 'UN', city: 'Unknown', flag: '' };
+    }
+}
+
+const sessionStartTime = Date.now();
+
+async function initGlobalAnalyticsTracker() {
+    const geo = await getUserGeoLocation();
+    const uId = localStorage.getItem('cricton_user_id') || ('user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now());
+    localStorage.setItem('cricton_user_id', uId);
+
+    const device = /android/i.test(navigator.userAgent) ? 'Android' : (/iPhone|iPad/i.test(navigator.userAgent) ? 'iOS' : 'Desktop');
+    const pageName = window.location.pathname.includes('player') ? 'Player Page' : 'Home Page';
+
+    // 1. Realtime Online Presence
+    const presenceRef = db.ref(`analytics/live_online/${uId}`);
+    db.ref('.info/connected').on('value', snap => {
+        if (snap.val() === true) {
+            presenceRef.onDisconnect().remove();
+            presenceRef.set({
+                user_id: uId,
+                joined_at: firebase.database.ServerValue.TIMESTAMP,
+                country: geo.country,
+                country_code: geo.country_code,
+                city: geo.city,
+                flag: geo.flag,
+                page: pageName,
+                device: device
+            });
+        }
+    });
+
+    // 2. Heartbeat & Session Stay Duration Tracking
+    setInterval(() => {
+        const durationSecs = Math.floor((Date.now() - sessionStartTime) / 1000);
+        presenceRef.update({ session_duration_secs: durationSecs, last_active: Date.now() });
+
+        db.ref(`analytics/user_engagement/${uId}`).set({
+            user_id: uId,
+            country: geo.country,
+            country_code: geo.country_code,
+            city: geo.city,
+            flag: geo.flag,
+            last_seen: firebase.database.ServerValue.TIMESTAMP,
+            duration_secs: durationSecs,
+            device: device,
+            date: new Date().toISOString().split('T')[0]
+        });
+    }, 5000);
+}
+
+// 3. PWA Install Event with Geo Data
+window.addEventListener('appinstalled', async () => {
+    const geo = await getUserGeoLocation();
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const uId = localStorage.getItem('cricton_user_id') || 'user_' + Math.random().toString(36).substr(2, 9);
+    const device = /android/i.test(navigator.userAgent) ? 'Android' : (/iPhone|iPad/i.test(navigator.userAgent) ? 'iOS' : 'Desktop');
+
+    db.ref(`pwa_analytics/installs_log/${uId}`).set({
+        install_date: dateStr,
+        install_time: timeStr,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        device: device,
+        user_id: uId,
+        country: geo.country,
+        country_code: geo.country_code,
+        city: geo.city,
+        flag: geo.flag
+    });
+
+    db.ref(`pwa_analytics/daily_counts/${dateStr}/${uId}`).set(true);
+});
+
+// Run Tracker
+initGlobalAnalyticsTracker();
     </script>
 </body>
 </html>
