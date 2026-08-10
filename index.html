@@ -897,6 +897,33 @@ setInterval(() => {
             document.getElementById('pwaGuideModal')?.classList.add('hidden');
             document.getElementById('pwaGuideOverlay')?.classList.add('hidden');
         }
+        // PWA Install Tracking Logic for Firebase
+window.addEventListener('appinstalled', () => {
+    recordPwaInstall();
+});
+
+function recordPwaInstall() {
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const uId = localStorage.getItem('cricton_user_id') || 'user_' + Math.random().toString(36).substr(2, 9);
+    
+    let deviceType = 'Desktop';
+    const ua = navigator.userAgent;
+    if (/android/i.test(ua)) deviceType = 'Android';
+    else if (/iPad|iPhone|iPod/i.test(ua)) deviceType = 'iOS';
+
+    // Save to Firebase RTDB
+    db.ref(`pwa_analytics/installs_log/${uId}`).set({
+        install_date: dateStr,
+        install_time: timeStr,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        device: deviceType,
+        user_id: uId
+    });
+
+    db.ref(`pwa_analytics/daily_counts/${dateStr}/${uId}`).set(true);
+}
     </script>
 </body>
 </html>
