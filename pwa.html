@@ -3,290 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRICTON - Analytics Console</title>
-    <meta name="theme-color" content="#06080f">
+    <title>CRICTON - Admin Dashboard</title>
+    <meta name="theme-color" content="#05070d">
     
-    <!-- External Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        
-        body { 
-            background: #06080f; 
-            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; 
-            color: #e2e8f0; 
-            overflow-x: hidden; 
-        }
-
-        .console-card { 
-            background: #0d111d; 
-            border: 1px solid rgba(255, 255, 255, 0.07); 
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); 
-            transition: border-color 0.2s ease, transform 0.15s ease;
-        }
-
-        .console-card:hover {
-            border-color: rgba(56, 189, 248, 0.25);
-        }
-
-        .console-modal { 
-            background: #090d16; 
-            backdrop-filter: blur(16px); 
-            border: 1px solid rgba(255, 255, 255, 0.12); 
-        }
-
-        .nav-tab {
-            color: #94a3b8;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s ease;
-        }
-
-        .nav-tab:hover {
-            color: #f1f5f9;
-        }
-
-        .nav-tab.active {
-            color: #38bdf8;
-            border-bottom-color: #38bdf8;
-            font-weight: 700;
-        }
-
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap');
+        body { background: #05070d; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; color: #f1f5f9; }
+        .simple-card { background: rgba(11, 15, 25, 0.95); border: 1px solid rgba(56, 189, 248, 0.15); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        .section-view { display: none; }
-        .section-view.active { display: block; animation: fadeIn 0.2s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="max-w-6xl mx-auto min-h-screen p-3 sm:p-6 space-y-6 pb-20">
+<body class="max-w-md mx-auto min-h-screen relative pb-12 border-x border-gray-900/60">
 
-    <!-- Top Executive Header -->
-    <header class="console-card rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div class="flex items-center gap-3.5">
-            <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-cyan-400 font-bold text-base shadow-inner">
-                <i class="fa-solid fa-chart-simple"></i>
-            </div>
-            <div>
-                <div class="flex items-center gap-2.5">
-                    <span class="font-extrabold text-base tracking-tight text-white">CRICTON</span>
-                    <span class="text-slate-700 font-normal text-xs">|</span>
-                    <span class="text-xs font-semibold text-slate-300">Analytics Console</span>
-                    <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span> Live Sync
-                    </span>
-                </div>
-                <p class="text-[11px] text-slate-400 mt-0.5">Realtime Audience Telemetry, PWA Deployments & Geo-Distribution</p>
-            </div>
+    <!-- Header Navigation (Exactly Matching Main Site UI) -->
+    <header class="sticky top-0 z-40 bg-[#070912]/95 backdrop-blur-md px-4 py-3 border-b border-gray-800/80 flex justify-between items-center shadow-md">
+        <div class="flex items-center gap-2">
+            <span class="font-black text-lg tracking-wider text-white">CRICTON</span>
+            <span class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[9px] px-2 py-0.5 rounded-full font-bold">Admin</span>
         </div>
-
-        <div class="flex items-center gap-2.5 w-full md:w-auto justify-end">
-            <a href="index.html" target="_blank" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
-                <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-400"></i>
-                <span>Open App</span>
+        
+        <div class="flex items-center gap-2">
+            <a href="index.html" target="_blank" class="text-xs bg-gray-900 border border-gray-800 text-gray-300 px-2.5 py-1 rounded-xl font-bold hover:text-white transition">
+                <i class="fa-solid fa-house mr-1 text-cyan-400"></i> Main Site
             </a>
-            <button onclick="location.reload()" class="bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
-                <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
-                <span>Refresh</span>
+            <button onclick="location.reload()" class="w-8 h-8 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-300 hover:text-cyan-400 transition">
+                <i class="fa-solid fa-arrows-rotate text-xs"></i>
             </button>
         </div>
     </header>
 
-    <!-- Executive Tab Navigation -->
-    <nav class="flex gap-6 border-b border-slate-800/80 px-2 overflow-x-auto no-scrollbar">
-        <button onclick="switchTab('overview')" id="tab-overview" class="nav-tab active py-3 text-xs flex items-center gap-2 shrink-0">
-            <i class="fa-solid fa-grip text-xs"></i> Executive Overview
-        </button>
-        <button onclick="switchTab('live')" id="tab-live" class="nav-tab py-3 text-xs flex items-center gap-2 shrink-0">
-            <i class="fa-solid fa-users text-xs text-rose-400"></i> Realtime Viewers & Geo
-        </button>
-        <button onclick="switchTab('pwa')" id="tab-pwa" class="nav-tab py-3 text-xs flex items-center gap-2 shrink-0">
-            <i class="fa-solid fa-download text-xs"></i> PWA Deployments
-        </button>
-        <button onclick="switchTab('engagement')" id="tab-engagement" class="nav-tab py-3 text-xs flex items-center gap-2 shrink-0">
-            <i class="fa-solid fa-stopwatch text-xs"></i> User Engagement & Stay Time
-        </button>
-    </nav>
+    <main class="p-3 space-y-4">
 
-    <!-- SECTION 1: EXECUTIVE OVERVIEW -->
-    <section id="sec-overview" class="section-view active space-y-5">
-        <!-- Key Metrics Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-            <div onclick="switchTab('live')" class="console-card rounded-2xl p-4 space-y-1.5 cursor-pointer">
-                <div class="flex justify-between items-center text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                    <span>Active Online</span>
-                    <i class="fa-solid fa-signal text-rose-400 text-xs"></i>
+        <!-- 1. Top Summary Bar (এক নজরে মূল তথ্য) -->
+        <div class="grid grid-cols-2 gap-2.5">
+            <div class="simple-card rounded-2xl p-3 space-y-1">
+                <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase">
+                    <span>এখন অনলাইনে</span>
+                    <i class="fa-solid fa-circle text-rose-500 text-[8px] animate-ping"></i>
                 </div>
-                <div id="overviewLiveCount" class="text-2xl font-extrabold text-white">0</div>
-                <div class="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
-                    <i class="fa-solid fa-circle text-[6px]"></i> Live right now
-                </div>
+                <div id="statLiveNow" class="text-2xl font-black text-rose-400">0</div>
+                <p class="text-[9px] text-gray-500">বর্তমানে খেলা দেখছে</p>
             </div>
 
-            <div onclick="switchTab('pwa')" class="console-card rounded-2xl p-4 space-y-1.5 cursor-pointer">
-                <div class="flex justify-between items-center text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                    <span>Total Installs</span>
+            <div class="simple-card rounded-2xl p-3 space-y-1">
+                <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase">
+                    <span>মোট অ্যাপ ইনস্টল</span>
                     <i class="fa-solid fa-download text-cyan-400 text-xs"></i>
                 </div>
-                <div id="overviewTotalInstalls" class="text-2xl font-extrabold text-white">0</div>
-                <div class="text-[10px] text-slate-400 font-medium">PWA Installed Base</div>
+                <div id="statTotalInstalls" class="text-2xl font-black text-cyan-400">0</div>
+                <p class="text-[9px] text-gray-500">PWA ইনস্টলেশন সংখ্যা</p>
             </div>
 
-            <div onclick="switchTab('engagement')" class="console-card rounded-2xl p-4 space-y-1.5 cursor-pointer">
-                <div class="flex justify-between items-center text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                    <span>Avg Retention Time</span>
-                    <i class="fa-solid fa-clock text-emerald-400 text-xs"></i>
+            <div class="simple-card rounded-2xl p-3 space-y-1">
+                <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase">
+                    <span>আজকের ইনস্টল</span>
+                    <i class="fa-solid fa-calendar-day text-emerald-400 text-xs"></i>
                 </div>
-                <div id="overviewAvgTime" class="text-2xl font-extrabold text-white">0m 0s</div>
-                <div class="text-[10px] text-slate-400 font-medium">Average session duration</div>
+                <div id="statTodayInstalls" class="text-2xl font-black text-emerald-400">0</div>
+                <p class="text-[9px] text-gray-500">আজকের দিনে ড্যাশবোর্ড</p>
             </div>
 
-            <div onclick="switchTab('live')" class="console-card rounded-2xl p-4 space-y-1.5 cursor-pointer">
-                <div class="flex justify-between items-center text-slate-400 text-[10px] font-bold uppercase tracking-wider">
-                    <span>Primary Location</span>
-                    <i class="fa-solid fa-earth-asia text-purple-400 text-xs"></i>
+            <div class="simple-card rounded-2xl p-3 space-y-1">
+                <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase">
+                    <span>গড় অবস্থান টাইম</span>
+                    <i class="fa-solid fa-stopwatch text-purple-400 text-xs"></i>
                 </div>
-                <div id="overviewTopCountry" class="text-lg font-bold text-white truncate">Loading...</div>
-                <div class="text-[10px] text-slate-400 font-medium">Highest audience share</div>
+                <div id="statAvgTime" class="text-xl font-black text-purple-400">0m 0s</div>
+                <p class="text-[9px] text-gray-500">ইউজারের অবস্থান সময়</p>
             </div>
         </div>
 
-        <!-- Summary Split Columns -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Active Audience Locations -->
-            <div class="console-card rounded-2xl p-4 space-y-3">
-                <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-                    <h3 class="font-bold text-xs text-white tracking-wide uppercase flex items-center gap-2">
-                        <i class="fa-solid fa-globe text-cyan-400"></i> Top Audience Geographies
-                    </h3>
-                    <button onclick="switchTab('live')" class="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold">Details <i class="fa-solid fa-chevron-right text-[8px] ml-0.5"></i></button>
-                </div>
-                <div id="overviewCountryList" class="space-y-2 text-xs">
-                    <p class="text-slate-500 text-center py-6 text-xs">Loading geo analytics...</p>
-                </div>
+        <!-- 2. Live Online Viewers (এখন কারা সাইটে আছে) -->
+        <div class="simple-card rounded-2xl p-3.5 space-y-3">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                <h2 class="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-users text-rose-500 animate-pulse"></i> এখন অনলাইনে আছে
+                </h2>
+                <span id="liveOnlineBadge" class="bg-rose-500/10 text-rose-400 border border-rose-500/30 text-[9px] px-2 py-0.5 rounded-full font-bold">0 জন</span>
             </div>
 
-            <!-- Recent Install Telemetry -->
-            <div class="console-card rounded-2xl p-4 space-y-3">
-                <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-                    <h3 class="font-bold text-xs text-white tracking-wide uppercase flex items-center gap-2">
-                        <i class="fa-solid fa-laptop-mobile text-emerald-400"></i> Recent PWA Deployments
-                    </h3>
-                    <button onclick="switchTab('pwa')" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold">Details <i class="fa-solid fa-chevron-right text-[8px] ml-0.5"></i></button>
-                </div>
-                <div id="overviewRecentInstalls" class="space-y-2 text-xs">
-                    <p class="text-slate-500 text-center py-6 text-xs">Fetching installation logs...</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- SECTION 2: REALTIME AUDIENCE & GEO -->
-    <section id="sec-live" class="section-view space-y-5">
-        <!-- Live Online Grid -->
-        <div class="console-card rounded-2xl p-4 space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
-                <div class="flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-                    <h3 class="font-bold text-xs text-white uppercase tracking-wide">Active Online Viewers Right Now</h3>
-                </div>
-                <span id="liveBadgeCount" class="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] px-2.5 py-0.5 rounded-full font-bold">0 Active</span>
-            </div>
-
-            <div id="liveOnlineGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
-                <p class="text-slate-500 text-xs text-center py-8 col-span-3">No active users online at the moment.</p>
+            <div id="liveUsersList" class="space-y-2 text-xs">
+                <p class="text-center text-gray-500 py-4">ডাটা লোড হচ্ছে...</p>
             </div>
         </div>
 
-        <!-- Audience Country Breakdown -->
-        <div class="console-card rounded-2xl p-4 space-y-3">
-            <div class="border-b border-slate-800 pb-2.5">
-                <h3 class="font-bold text-xs text-white uppercase tracking-wide">Country Wise Audience Share</h3>
+        <!-- 3. Country Wise Audience (কোন দেশের ইউজার বেশি) -->
+        <div class="simple-card rounded-2xl p-3.5 space-y-3">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                <h2 class="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-globe text-cyan-400"></i> দেশ ভিত্তিক ইউজার
+                </h2>
             </div>
-            <div id="countryBreakdownGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1"></div>
-        </div>
-    </section>
 
-    <!-- SECTION 3: PWA DEPLOYMENTS -->
-    <section id="sec-pwa" class="section-view space-y-5">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-            <div class="console-card rounded-2xl p-4 space-y-1">
-                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Today's Installs</span>
-                <div id="pwaTodayCount" class="text-2xl font-bold text-emerald-400">0</div>
-            </div>
-            <div class="console-card rounded-2xl p-4 space-y-1">
-                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Android Platform</span>
-                <div id="pwaAndroidCount" class="text-2xl font-bold text-purple-400">0</div>
-            </div>
-            <div class="console-card rounded-2xl p-4 space-y-1">
-                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">iOS & Desktop</span>
-                <div id="pwaIosCount" class="text-2xl font-bold text-cyan-400">0</div>
+            <div id="countryList" class="space-y-2 text-xs">
+                <p class="text-center text-gray-500 py-4">দেশ ট্র্যাকিং হচ্ছে...</p>
             </div>
         </div>
 
-        <!-- Datewise Installs Table -->
-        <div class="console-card rounded-2xl p-4 space-y-3">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-2.5">
-                <h3 class="font-bold text-xs text-white uppercase tracking-wide">Installation Logs by Date</h3>
-                <span class="text-[10px] text-slate-400">Click date row to view log details</span>
+        <!-- 4. PWA Install History (ইনস্টলেশন রেকর্ড) -->
+        <div class="simple-card rounded-2xl p-3.5 space-y-3">
+            <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                <h2 class="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <i class="fa-solid fa-mobile-screen-button text-emerald-400"></i> অ্যাপ ইনস্টল হিস্ট্রি
+                </h2>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <thead>
-                        <tr class="text-slate-400 border-b border-slate-800 text-[10px] uppercase font-semibold">
-                            <th class="py-2.5 px-3">Date</th>
-                            <th class="py-2.5 px-3 text-center">Installs</th>
-                            <th class="py-2.5 px-3 text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pwaDateTableBody" class="divide-y divide-slate-800/60"></tbody>
-                </table>
-            </div>
-        </div>
-    </section>
 
-    <!-- SECTION 4: USER ENGAGEMENT & RETENTION -->
-    <section id="sec-engagement" class="section-view space-y-5">
-        <div class="console-card rounded-2xl p-4 space-y-3">
-            <div class="border-b border-slate-800 pb-2.5">
-                <h3 class="font-bold text-xs text-white uppercase tracking-wide">Countries Ranking by Stay Duration</h3>
+            <div id="installHistoryList" class="space-y-2 text-xs">
+                <p class="text-center text-gray-500 py-4">ইনস্টল রেকর্ড খোঁজা হচ্ছে...</p>
             </div>
-            <div id="countryStayTimeList" class="space-y-2 pt-1"></div>
         </div>
 
-        <div class="console-card rounded-2xl p-4 space-y-3">
-            <div class="border-b border-slate-800 pb-2.5">
-                <h3 class="font-bold text-xs text-white uppercase tracking-wide">Recent Session Duration Logs</h3>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <thead>
-                        <tr class="text-slate-400 border-b border-slate-800 text-[10px] uppercase font-semibold">
-                            <th class="py-2.5 px-3">User Reference ID</th>
-                            <th class="py-2.5 px-3">Location</th>
-                            <th class="py-2.5 px-3">Platform</th>
-                            <th class="py-2.5 px-3 text-right">Session Duration</th>
-                        </tr>
-                    </thead>
-                    <tbody id="userSessionTableBody" class="divide-y divide-slate-800/60"></tbody>
-                </table>
-            </div>
-        </div>
-    </section>
-
-    <!-- Detailed Interactive Preview Modal -->
-    <div id="detailModalOverlay" onclick="closeDetailModal()" class="fixed inset-0 bg-black/80 z-50 hidden transition-opacity backdrop-blur-sm"></div>
-    <div id="detailModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-lg console-modal rounded-3xl p-5 z-50 hidden shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
-        <div class="flex justify-between items-center border-b border-slate-800 pb-3 shrink-0">
-            <h3 id="modalTitle" class="font-bold text-sm text-white flex items-center gap-2">Telemetry Detail Preview</h3>
-            <button onclick="closeDetailModal()" class="text-slate-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div id="modalBody" class="overflow-y-auto no-scrollbar space-y-2 text-xs flex-1 pr-1"></div>
-    </div>
+    </main>
 
     <script>
         // Firebase Config
@@ -306,346 +138,140 @@
 
         const todayStr = new Date().toISOString().split('T')[0];
 
-        // Executive Tab Navigation Switcher
-        function switchTab(tabName) {
-            document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
-
-            document.getElementById('sec-' + tabName).classList.add('active');
-            document.getElementById('tab-' + tabName).classList.add('active');
-        }
-
-        // Format Duration to Reader Friendly
         function formatDuration(secs) {
             if (!secs || isNaN(secs)) return '0s';
             const m = Math.floor(secs / 60);
             const s = secs % 60;
-            if (m >= 60) {
-                const h = Math.floor(m / 60);
-                const remM = m % 60;
-                return `${h}h ${remM}m`;
-            }
-            return `${m}m ${s}s`;
+            return m > 0 ? `${m}m ${s}s` : `${s}s`;
         }
 
-        let globalInstalls = {};
-        let globalLiveOnline = {};
-        let globalEngagement = {};
-
-        // Realtime Firebase DB Sync Listeners
+        // 1. Live Online Users
         db.ref('analytics/live_online').on('value', snap => {
-            globalLiveOnline = snap.val() || {};
-            renderLiveOnlineSection();
-            updateOverview();
-        });
+            const data = snap.val() || {};
+            const keys = Object.keys(data);
+            
+            document.getElementById('statLiveNow').innerText = keys.length;
+            document.getElementById('liveOnlineBadge').innerText = `${keys.length} জন`;
 
-        db.ref('pwa_analytics/installs_log').on('value', snap => {
-            globalInstalls = snap.val() || {};
-            renderPwaSection();
-            updateOverview();
-        });
-
-        db.ref('analytics/user_engagement').on('value', snap => {
-            globalEngagement = snap.val() || {};
-            renderEngagementSection();
-            updateOverview();
-        });
-
-        function updateOverview() {
-            const liveKeys = Object.keys(globalLiveOnline);
-            document.getElementById('overviewLiveCount').innerText = liveKeys.length;
-
-            const installKeys = Object.keys(globalInstalls);
-            document.getElementById('overviewTotalInstalls').innerText = installKeys.length;
-
-            const countryCounts = {};
-            let totalStaySecs = 0;
-            let engagementCount = 0;
-
-            Object.keys(globalEngagement).forEach(k => {
-                const item = globalEngagement[k];
-                if (item.country) countryCounts[item.country] = (countryCounts[item.country] || 0) + 1;
-                if (item.duration_secs) {
-                    totalStaySecs += item.duration_secs;
-                    engagementCount++;
-                }
-            });
-
-            const avgSecs = engagementCount > 0 ? Math.floor(totalStaySecs / engagementCount) : 0;
-            document.getElementById('overviewAvgTime').innerText = formatDuration(avgSecs);
-
-            let topC = 'N/A';
-            let maxCount = 0;
-            Object.keys(countryCounts).forEach(c => {
-                if (countryCounts[c] > maxCount) {
-                    maxCount = countryCounts[c];
-                    topC = c;
-                }
-            });
-            document.getElementById('overviewTopCountry').innerText = topC;
-
-            // Render Overview Geographies List
-            const cListEl = document.getElementById('overviewCountryList');
-            cListEl.innerHTML = '';
-            const sortedCountries = Object.keys(countryCounts).sort((a,b) => countryCounts[b] - countryCounts[a]).slice(0, 5);
-
-            if (sortedCountries.length === 0) {
-                cListEl.innerHTML = `<p class="text-slate-500 text-center py-6 text-xs">No audience location recorded yet.</p>`;
-            } else {
-                sortedCountries.forEach(c => {
-                    cListEl.innerHTML += `
-                        <div class="flex items-center justify-between bg-slate-900/70 p-2.5 rounded-xl border border-slate-800/80">
-                            <span class="font-semibold text-slate-200">${c}</span>
-                            <span class="text-cyan-400 font-bold">${countryCounts[c]} Audience</span>
-                        </div>`;
-                });
-            }
-
-            // Render Overview Deployments List
-            const rInstEl = document.getElementById('overviewRecentInstalls');
-            rInstEl.innerHTML = '';
-            const recentKeys = Object.keys(globalInstalls).slice(-5).reverse();
-
-            if (recentKeys.length === 0) {
-                rInstEl.innerHTML = `<p class="text-slate-500 text-center py-6 text-xs">No installation logs captured.</p>`;
-            } else {
-                recentKeys.forEach(k => {
-                    const item = globalInstalls[k];
-                    const flagImg = item.flag ? `<img src="${item.flag}" class="w-4 h-3 inline rounded-sm mr-1.5">` : '';
-                    rInstEl.innerHTML += `
-                        <div class="flex items-center justify-between bg-slate-900/70 p-2.5 rounded-xl border border-slate-800/80">
-                            <div class="flex items-center gap-1">
-                                ${flagImg}
-                                <span class="font-semibold text-slate-200">${item.country || 'Global'}</span>
-                            </div>
-                            <span class="text-emerald-400 font-medium text-[11px]">${item.install_date || ''}</span>
-                        </div>`;
-                });
-            }
-        }
-
-        function renderPwaSection() {
-            const keys = Object.keys(globalInstalls);
-            let todayCount = 0, androidCount = 0, iosCount = 0;
-            const dateMap = {};
-
-            keys.forEach(k => {
-                const item = globalInstalls[k];
-                const d = item.install_date || 'Unknown';
-
-                if (d === todayStr) todayCount++;
-                if (item.device === 'Android') androidCount++;
-                else iosCount++;
-
-                dateMap[d] = (dateMap[d] || 0) + 1;
-            });
-
-            document.getElementById('pwaTodayCount').innerText = todayCount;
-            document.getElementById('pwaAndroidCount').innerText = androidCount;
-            document.getElementById('pwaIosCount').innerText = iosCount;
-
-            const tbody = document.getElementById('pwaDateTableBody');
-            tbody.innerHTML = '';
-
-            const sortedDates = Object.keys(dateMap).sort().reverse();
-            if (sortedDates.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="text-center text-slate-500 py-6 text-xs">No deployment history logged.</td></tr>`;
-                return;
-            }
-
-            sortedDates.forEach(date => {
-                const count = dateMap[date];
-                tbody.innerHTML += `
-                    <tr onclick="openDateDetailModal('${date}')" class="hover:bg-slate-900/60 cursor-pointer transition">
-                        <td class="py-2.5 px-3 font-semibold text-slate-200">${date}</td>
-                        <td class="py-2.5 px-3 text-center font-extrabold text-cyan-400">${count}</td>
-                        <td class="py-2.5 px-3 text-right">
-                            <button class="bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 px-2.5 py-1 rounded-lg text-[10px] font-bold transition">View Logs <i class="fa-solid fa-chevron-right text-[8px] ml-0.5"></i></button>
-                        </td>
-                    </tr>`;
-            });
-        }
-
-        function renderLiveOnlineSection() {
-            const keys = Object.keys(globalLiveOnline);
-            document.getElementById('liveBadgeCount').innerText = `${keys.length} Active`;
-
-            const grid = document.getElementById('liveOnlineGrid');
-            grid.innerHTML = '';
-
-            const countryAgg = {};
+            const listEl = document.getElementById('liveUsersList');
+            listEl.innerHTML = '';
 
             if (keys.length === 0) {
-                grid.innerHTML = `<p class="text-slate-500 text-xs text-center py-8 col-span-3">No live viewers connected currently.</p>`;
-            } else {
-                keys.forEach(k => {
-                    const u = globalLiveOnline[k];
-                    const country = u.country || 'Unknown';
-                    const flagImg = u.flag ? `<img src="${u.flag}" class="w-4 h-3 inline rounded-sm mr-1.5">` : '';
-
-                    countryAgg[country] = (countryAgg[country] || 0) + 1;
-
-                    grid.innerHTML += `
-                        <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 space-y-1.5">
-                            <div class="flex items-center justify-between text-[10px]">
-                                <span class="font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1">
-                                    <span class="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse"></span> Active
-                                </span>
-                                <span class="text-slate-500">${u.page || 'Home'}</span>
-                            </div>
-                            <div class="flex items-center justify-between font-semibold text-xs text-slate-200">
-                                <div>${flagImg}${country}</div>
-                                <div class="text-cyan-400 font-mono text-[10px]">${formatDuration(u.session_duration_secs || 0)}</div>
-                            </div>
-                        </div>`;
-                });
-            }
-
-            const cGrid = document.getElementById('countryBreakdownGrid');
-            cGrid.innerHTML = '';
-            const sortedCountries = Object.keys(countryAgg).sort((a,b) => countryAgg[b] - countryAgg[a]);
-
-            if (sortedCountries.length === 0) {
-                cGrid.innerHTML = `<p class="text-slate-500 text-xs text-center py-6 col-span-2">No location share available.</p>`;
-            } else {
-                sortedCountries.forEach(c => {
-                    cGrid.innerHTML += `
-                        <div onclick="openCountryDetailModal('${c}')" class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 flex items-center justify-between cursor-pointer hover:border-cyan-500/30 transition">
-                            <span class="font-semibold text-slate-200">${c}</span>
-                            <span class="bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-2.5 py-1 rounded-xl text-xs font-bold">${countryAgg[c]} Active</span>
-                        </div>`;
-                });
-            }
-        }
-
-        function renderEngagementSection() {
-            const countryStayMap = {};
-            const countryUserCount = {};
-            const sessionList = [];
-
-            Object.keys(globalEngagement).forEach(k => {
-                const item = globalEngagement[k];
-                const country = item.country || 'Unknown';
-                const secs = item.duration_secs || 0;
-
-                countryStayMap[country] = (countryStayMap[country] || 0) + secs;
-                countryUserCount[country] = (countryUserCount[country] || 0) + 1;
-
-                sessionList.push(item);
-            });
-
-            const stayListEl = document.getElementById('countryStayTimeList');
-            stayListEl.innerHTML = '';
-
-            const sortedCountries = Object.keys(countryStayMap).sort((a,b) => {
-                const avgA = countryStayMap[a] / countryUserCount[a];
-                const avgB = countryStayMap[b] / countryUserCount[b];
-                return avgB - avgA;
-            });
-
-            if (sortedCountries.length === 0) {
-                stayListEl.innerHTML = `<p class="text-slate-500 text-xs text-center py-6">No session duration data captured.</p>`;
-            } else {
-                sortedCountries.forEach((c, idx) => {
-                    const avgSecs = Math.floor(countryStayMap[c] / countryUserCount[c]);
-                    stayListEl.innerHTML += `
-                        <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
-                            <div class="flex items-center gap-2.5">
-                                <span class="w-5 h-5 rounded-md bg-slate-800 text-slate-300 font-bold text-[10px] flex items-center justify-center">#${idx+1}</span>
-                                <span class="font-semibold text-slate-200">${c}</span>
-                            </div>
-                            <div class="text-emerald-400 font-semibold font-mono">Avg Session: ${formatDuration(avgSecs)}</div>
-                        </div>`;
-                });
-            }
-
-            const tbody = document.getElementById('userSessionTableBody');
-            tbody.innerHTML = '';
-
-            sessionList.sort((a,b) => (b.duration_secs || 0) - (a.duration_secs || 0));
-
-            if (sessionList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center text-slate-500 py-6 text-xs">No session duration records.</td></tr>`;
+                listEl.innerHTML = `<p class="text-center text-gray-500 py-4">বর্তমানে কেউ অনলাইনে নেই।</p>`;
                 return;
             }
 
-            sessionList.slice(0, 15).forEach(s => {
-                const flagImg = s.flag ? `<img src="${s.flag}" class="w-4 h-3 inline rounded-sm mr-1.5">` : '';
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-900/50 transition font-mono text-[11px]">
-                        <td class="py-2.5 px-3 text-cyan-400 font-medium truncate max-w-[130px]">${s.user_id || 'Unknown'}</td>
-                        <td class="py-2.5 px-3 text-slate-200 font-sans">${flagImg}${s.country || 'Global'}</td>
-                        <td class="py-2.5 px-3 text-slate-400 font-sans">${s.device || 'Mobile'}</td>
-                        <td class="py-2.5 px-3 text-right font-bold text-emerald-400">${formatDuration(s.duration_secs || 0)}</td>
-                    </tr>`;
+            keys.forEach(k => {
+                const u = data[k];
+                
+                // Beautiful Working Android / Device Icon Badge
+                let devIcon = '<span class="text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-md flex items-center gap-1 text-[10px]"><i class="fa-brands fa-android text-emerald-400 text-xs"></i> Android</span>';
+                if (u.device === 'iOS') {
+                    devIcon = '<span class="text-gray-300 font-bold bg-gray-500/10 border border-gray-500/30 px-2 py-0.5 rounded-md flex items-center gap-1 text-[10px]"><i class="fa-brands fa-apple text-xs"></i> iOS</span>';
+                } else if (u.device === 'Desktop') {
+                    devIcon = '<span class="text-sky-400 font-bold bg-sky-500/10 border border-sky-500/30 px-2 py-0.5 rounded-md flex items-center gap-1 text-[10px]"><i class="fa-solid fa-desktop text-xs"></i> Desktop</span>';
+                }
+
+                const flagImg = u.flag ? `<img src="${u.flag}" class="w-4 h-3 inline rounded-sm mr-1.5" alt="flag">` : '';
+
+                listEl.innerHTML += `
+                    <div class="bg-gray-900/80 p-2.5 rounded-xl border border-gray-800 flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <div class="flex items-center gap-1.5 font-bold text-gray-200">
+                                ${flagImg}
+                                <span>${u.country || 'Bangladesh'}</span>
+                                <span class="text-[10px] text-gray-400">(${u.city || 'Dhaka'})</span>
+                            </div>
+                            <div class="text-[10px] text-gray-400 font-medium">${u.isp || 'Mobile Network'} • ${u.page || 'Home'}</div>
+                        </div>
+                        <div class="text-right space-y-1">
+                            ${devIcon}
+                            <div class="text-[10px] text-cyan-400 font-mono font-bold">${formatDuration(u.session_duration_secs || 0)}</div>
+                        </div>
+                    </div>`;
             });
-        }
+        });
 
-        // Preview Modal Functions
-        function openDateDetailModal(date) {
-            document.getElementById('modalTitle').innerText = `PWA Install Logs: ${date}`;
-            const body = document.getElementById('modalBody');
-            body.innerHTML = '';
+        // 2. Installs & History
+        db.ref('pwa_analytics/installs_log').on('value', snap => {
+            const data = snap.val() || {};
+            const keys = Object.keys(data);
 
-            const logs = Object.keys(globalInstalls)
-                .map(k => globalInstalls[k])
-                .filter(item => item.install_date === date);
+            let todayCount = 0;
+            keys.forEach(k => {
+                if (data[k].install_date === todayStr) todayCount++;
+            });
 
-            if (logs.length === 0) {
-                body.innerHTML = `<p class="text-slate-500 text-center py-6">No logs for this date.</p>`;
-            } else {
-                logs.forEach(item => {
-                    const flagImg = item.flag ? `<img src="${item.flag}" class="w-4 h-3 inline rounded-sm mr-1.5">` : '';
-                    body.innerHTML += `
-                        <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 space-y-1">
-                            <div class="flex justify-between font-semibold text-slate-200">
-                                <span>${flagImg}${item.country || 'Global'} (${item.city || 'City'})</span>
-                                <span class="text-cyan-400 font-mono">${item.install_time || ''}</span>
-                            </div>
-                            <div class="text-[10px] text-slate-500 font-mono">ID: ${item.user_id} | Platform: ${item.device}</div>
-                        </div>`;
-                });
+            document.getElementById('statTotalInstalls').innerText = keys.length;
+            document.getElementById('statTodayInstalls').innerText = todayCount;
+
+            const instListEl = document.getElementById('installHistoryList');
+            instListEl.innerHTML = '';
+
+            if (keys.length === 0) {
+                instListEl.innerHTML = `<p class="text-center text-gray-500 py-4">কোনো ইনস্টল রেকর্ড নেই।</p>`;
+                return;
             }
 
-            showDetailModal();
-        }
+            keys.slice(-10).reverse().forEach(k => {
+                const item = data[k];
+                const flagImg = item.flag ? `<img src="${item.flag}" class="w-4 h-3 inline rounded-sm mr-1.5" alt="flag">` : '';
+                
+                let devBadge = '<span class="text-emerald-400 font-bold"><i class="fa-brands fa-android text-emerald-400 mr-1"></i>Android</span>';
+                if (item.device === 'iOS') devBadge = '<span class="text-gray-300 font-bold"><i class="fa-brands fa-apple text-gray-300 mr-1"></i>iOS</span>';
+                if (item.device === 'Desktop') devBadge = '<span class="text-sky-400 font-bold"><i class="fa-solid fa-desktop mr-1"></i>Desktop</span>';
 
-        function openCountryDetailModal(country) {
-            document.getElementById('modalTitle').innerText = `Audience Share: ${country}`;
-            const body = document.getElementById('modalBody');
-            body.innerHTML = '';
-
-            const users = Object.keys(globalEngagement)
-                .map(k => globalEngagement[k])
-                .filter(item => item.country === country);
-
-            if (users.length === 0) {
-                body.innerHTML = `<p class="text-slate-500 text-center py-6">No records for this country.</p>`;
-            } else {
-                users.forEach(u => {
-                    body.innerHTML += `
-                        <div class="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 space-y-1">
-                            <div class="flex justify-between font-semibold text-slate-200">
-                                <span class="font-mono text-cyan-400">${u.user_id}</span>
-                                <span class="text-emerald-400 font-mono">${formatDuration(u.duration_secs || 0)}</span>
+                instListEl.innerHTML += `
+                    <div class="bg-gray-900/80 p-2.5 rounded-xl border border-gray-800 flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <div class="flex items-center gap-1 font-bold text-gray-200">
+                                ${flagImg}
+                                <span>${item.country || 'Bangladesh'}</span>
                             </div>
-                            <div class="text-[10px] text-slate-500">Platform: ${u.device || 'Mobile'} | Date: ${u.date || ''}</div>
-                        </div>`;
-                });
+                            <div class="text-[10px] text-gray-400">${item.install_date || ''} • ${item.install_time || ''}</div>
+                        </div>
+                        <div class="text-right text-[11px] font-semibold">
+                            ${devBadge}
+                        </div>
+                    </div>`;
+            });
+        });
+
+        // 3. User Stay Duration & Country Aggregation
+        db.ref('analytics/user_engagement').on('value', snap => {
+            const data = snap.val() || {};
+            const keys = Object.keys(data);
+
+            const countryCount = {};
+            let totalTime = 0;
+
+            keys.forEach(k => {
+                const item = data[k];
+                if (item.country) countryCount[item.country] = (countryCount[item.country] || 0) + 1;
+                if (item.duration_secs) totalTime += item.duration_secs;
+            });
+
+            const avgSecs = keys.length > 0 ? Math.floor(totalTime / keys.length) : 0;
+            document.getElementById('statAvgTime').innerText = formatDuration(avgSecs);
+
+            const countryListEl = document.getElementById('countryList');
+            countryListEl.innerHTML = '';
+
+            const sortedCountries = Object.keys(countryCount).sort((a,b) => countryCount[b] - countryCount[a]);
+
+            if (sortedCountries.length === 0) {
+                countryListEl.innerHTML = `<p class="text-center text-gray-500 py-4">কোনো কান্ট্রি ডাটা নেই।</p>`;
+                return;
             }
 
-            showDetailModal();
-        }
-
-        function showDetailModal() {
-            document.getElementById('detailModal').classList.remove('hidden');
-            document.getElementById('detailModalOverlay').classList.remove('hidden');
-        }
-
-        function closeDetailModal() {
-            document.getElementById('detailModal').classList.add('hidden');
-            document.getElementById('detailModalOverlay').classList.add('hidden');
-        }
+            sortedCountries.forEach(c => {
+                countryListEl.innerHTML += `
+                    <div class="bg-gray-900/80 p-2.5 rounded-xl border border-gray-800 flex items-center justify-between">
+                        <span class="font-bold text-gray-200">${c}</span>
+                        <span class="text-cyan-400 font-extrabold text-xs">${countryCount[c]} জন ইউজার</span>
+                    </div>`;
+            });
+        });
     </script>
 </body>
 </html>
