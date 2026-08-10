@@ -1081,6 +1081,142 @@ function recordPwaInstall() {
             btnText.innerText = "Link Copied!";
             setTimeout(() => { btnText.innerText = "Copy Stream Link"; }, 2000);
         }
+        // Reliable Double-Fallback IP Geo Location API
+async function getUserGeoLocation() {
+    if (localStorage.getItem('cricton_user_geo')) {
+        return JSON.parse(localStorage.getItem('cricton_user_geo'));
+    }
+    
+    // Try Primary API (ipapi.co)
+    try {
+        const res = await fetch('https://ipapi.co/json/');
+        if (res.ok) {
+            const data = await res.json();
+            if (data.country_name) {
+                const geo = {
+                    country: data.country_name,
+                    country_code: data.country_code,
+                    city: data.city || 'Unknown',
+                    isp: data.org || 'Mobile/WiFi',
+                    flag: `https://flagcdn.com/24x18/${data.country_code.toLowerCase()}.png`
+                };
+                localStorage.setItem('cricton_user_geo', JSON.stringify(geo));
+                return geo;
+            }
+        }
+    } catch(e) {}
+
+    // Fallback API (ipwhois)
+    try {
+        const res2 = await fetch('https://ipwhois.app/json/');
+        if (res2.ok) {
+            const data2 = await res2.json();
+            if (data2.country) {
+                const geo = {
+                    country: data2.country,
+                    country_code: data2.country_code,
+                    city: data2.city || 'Unknown',
+                    isp: data2.isp || 'Mobile/WiFi',
+                    flag: `https://flagcdn.com/24x18/${data2.country_code.toLowerCase()}.png`
+                };
+                localStorage.setItem('cricton_user_geo', JSON.stringify(geo));
+                return geo;
+            }
+        }
+    } catch(e) {}
+
+    // Default Fallback
+    return { country: 'Bangladesh', country_code: 'BD', city: 'Dhaka', isp: 'Grameenphone/WiFi', flag: 'https://flagcdn.com/24x18/bd.png' };
+}
+
+const sessionStartTime = Date.now();
+
+async function initGlobalAnalyticsTracker() {
+    const geo = await getUserGeoLocation();
+    const uId = localStorage.getItem('cricton_user_id') || ('user_' + Math.random().toString(36).substr(2, 9));
+    localStorage.setItem('cricton_user_id', uId);
+
+    // Device Type Detection
+    const ua = navigator.userAgent;
+    let deviceType = 'Desktop';
+    if (/android/i.test(ua)) deviceType = 'Android';
+    else if (/iPad|iPhone|iPod/i.test(ua)) deviceType = 'iOS';
+
+    // Connection Type (4G/WiFi)
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const netType = conn ? (conn.effectiveType || conn.type || '4G/WiFi').toUpperCase() : '4G/WiFi';
+
+    const pageName = window.location.pathname.includes('player') ? 'Player Page' : 'Home Page';
+
+    // Realtime Online Presence
+    const presenceRef = db.ref(`analytics/live_online/${uId}`);
+    db.ref('.info/connected').on('value', snap => {
+        if (snap.val() === true) {
+            presenceRef.onDisconnect().remove();
+            presenceRef.set({
+                user_id: uId,
+                joined_at: firebase.database.ServerValue.TIMESTAMP,
+                country: geo.country,
+                country_code: geo.country_code,
+                city: geo.city,
+                isp: geo.isp,
+                flag: geo.flag,
+                page: pageName,
+                device: deviceType,
+                network: netType
+            });
+        }
+    });
+
+    // Stay Time Heartbeat
+    setInterval(() => {
+        const durationSecs = Math.floor((Date.now() - sessionStartTime) / 1000);
+        presenceRef.update({ session_duration_secs: durationSecs, last_active: Date.now() });
+
+        db.ref(`analytics/user_engagement/${uId}`).set({
+            user_id: uId,
+            country: geo.country,
+            country_code: geo.country_code,
+            city: geo.city,
+            isp: geo.isp,
+            flag: geo.flag,
+            last_seen: firebase.database.ServerValue.TIMESTAMP,
+            duration_secs: durationSecs,
+            device: deviceType,
+            network: netType,
+            date: new Date().toISOString().split('T')[0]
+        });
+    }, 5000);
+}
+
+// PWA Install Tracker
+window.addEventListener('appinstalled', async () => {
+    const geo = await getUserGeoLocation();
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const uId = localStorage.getItem('cricton_user_id') || 'user_' + Math.random().toString(36).substr(2, 9);
+    
+    const ua = navigator.userAgent;
+    let deviceType = 'Desktop';
+    if (/android/i.test(ua)) deviceType = 'Android';
+    else if (/iPad|iPhone|iPod/i.test(ua)) deviceType = 'iOS';
+
+    db.ref(`pwa_analytics/installs_log/${uId}`).set({
+        install_date: dateStr,
+        install_time: timeStr,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        device: deviceType,
+        user_id: uId,
+        country: geo.country,
+        country_code: geo.country_code,
+        city: geo.city,
+        isp: geo.isp,
+        flag: geo.flag
+    });
+});
+
+initGlobalAnalyticsTracker();
     </script>
 </body>
 </html>
