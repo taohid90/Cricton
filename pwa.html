@@ -20,105 +20,202 @@
 </head>
 <body class="max-w-md mx-auto min-h-screen relative pb-12 border-x border-gray-900/60">
 
-    <!-- Header Navigation (Exactly Matching Main Site UI) -->
-    <header class="sticky top-0 z-40 bg-[#070912]/95 backdrop-blur-md px-4 py-3 border-b border-gray-800/80 flex justify-between items-center shadow-md">
-        <div class="flex items-center gap-2">
-            <span class="font-black text-lg tracking-wider text-white">CRICTON</span>
-            <span class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[9px] px-2 py-0.5 rounded-full font-bold">Admin</span>
-        </div>
-        
-        <div class="flex items-center gap-2">
-            <a href="index.html" target="_blank" class="text-xs bg-gray-900 border border-gray-800 text-gray-300 px-2.5 py-1 rounded-xl font-bold hover:text-white transition">
-                <i class="fa-solid fa-house mr-1 text-cyan-400"></i> Main Site
-            </a>
-            <button onclick="location.reload()" class="w-8 h-8 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-300 hover:text-cyan-400 transition">
-                <i class="fa-solid fa-arrows-rotate text-xs"></i>
-            </button>
-        </div>
-    </header>
-
-    <main class="p-3 space-y-4">
-
-        <!-- 1. Top Summary Bar (এক নজরে মূল তথ্য) -->
-        <div class="grid grid-cols-2 gap-2.5">
-            <div class="simple-card rounded-2xl p-3 space-y-1">
-                <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase">
-                    <span>এখন অনলাইনে</span>
-                    <i class="fa-solid fa-circle text-rose-500 text-[8px] animate-ping"></i>
+    <!-- 🔒 1. Login Screen Overlay -->
+    <div id="loginOverlay" class="fixed inset-0 z-50 bg-[#05070d] flex items-center justify-center p-4">
+        <div class="simple-card w-full max-w-sm rounded-2xl p-6 space-y-5 border border-cyan-500/30">
+            <div class="text-center space-y-1">
+                <div class="inline-flex p-3 rounded-2xl bg-cyan-500/10 text-cyan-400 mb-2">
+                    <i class="fa-solid fa-shield-halved text-2xl"></i>
                 </div>
-                <div id="statLiveNow" class="text-2xl font-black text-rose-400">0</div>
-                <p class="text-[9px] text-gray-500">বর্তমানে খেলা দেখছে</p>
+                <h1 class="text-xl font-black text-white">CRICTON ADMIN</h1>
+                <p class="text-xs text-gray-400">ড্যাশবোর্ডে প্রবেশ করতে লগইন করুন</p>
             </div>
 
-            <div class="simple-card rounded-2xl p-3 space-y-1">
-                <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase">
-                    <span>মোট অ্যাপ ইনস্টল</span>
-                    <i class="fa-solid fa-download text-cyan-400 text-xs"></i>
+            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1">ইমেইল</label>
+                    <input type="email" id="loginEmail" required placeholder="cricton0@gmail.com" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500">
                 </div>
-                <div id="statTotalInstalls" class="text-2xl font-black text-cyan-400">0</div>
-                <p class="text-[9px] text-gray-500">PWA ইনস্টলেশন সংখ্যা</p>
-            </div>
-
-            <div class="simple-card rounded-2xl p-3 space-y-1">
-                <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase">
-                    <span>আজকের ইনস্টল</span>
-                    <i class="fa-solid fa-calendar-day text-emerald-400 text-xs"></i>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-400 uppercase mb-1">পাসওয়ার্ড</label>
+                    <input type="password" id="loginPass" required placeholder="••••••••" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500">
                 </div>
-                <div id="statTodayInstalls" class="text-2xl font-black text-emerald-400">0</div>
-                <p class="text-[9px] text-gray-500">আজকের দিনে ড্যাশবোর্ড</p>
-            </div>
 
-            <div class="simple-card rounded-2xl p-3 space-y-1">
-                <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase">
-                    <span>গড় অবস্থান টাইম</span>
-                    <i class="fa-solid fa-stopwatch text-purple-400 text-xs"></i>
+                <div id="loginError" class="text-rose-400 text-xs text-center hidden font-semibold">
+                    ইমেইল অথবা পাসওয়ার্ড ভুল হয়েছে!
                 </div>
-                <div id="statAvgTime" class="text-xl font-black text-purple-400">0m 0s</div>
-                <p class="text-[9px] text-gray-500">ইউজারের অবস্থান সময়</p>
+
+                <button type="submit" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold py-2.5 rounded-xl text-xs transition">
+                    লগইন করুন
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 📊 2. Main Admin Dashboard Content (Hidden by default) -->
+    <div id="adminContent" class="hidden">
+
+        <!-- Header Navigation -->
+        <header class="sticky top-0 z-40 bg-[#070912]/95 backdrop-blur-md px-4 py-3 border-b border-gray-800/80 flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-2">
+                <span class="font-black text-lg tracking-wider text-white">CRICTON</span>
+                <span class="bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-[9px] px-2 py-0.5 rounded-full font-bold">Admin</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <a href="index.html" target="_blank" class="text-xs bg-gray-900 border border-gray-800 text-gray-300 px-2.5 py-1 rounded-xl font-bold hover:text-white transition">
+                    <i class="fa-solid fa-house text-cyan-400"></i>
+                </a>
+                <button onclick="location.reload()" class="w-8 h-8 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-300 hover:text-cyan-400 transition">
+                    <i class="fa-solid fa-arrows-rotate text-xs"></i>
+                </button>
+                <button onclick="handleLogout()" title="Logout" class="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 hover:bg-rose-500 hover:text-white transition">
+                    <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="p-3 space-y-4">
+
+            <!-- 1. Page Views Statistics (আজকে ও সর্বমোট পেজ ভিউ) -->
+            <div class="simple-card rounded-2xl p-3.5 space-y-3 border-cyan-500/30">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                    <h2 class="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-eye text-cyan-400"></i> পেজ ভিউ অ্যানালিটিক্স
+                    </h2>
+                    <span class="text-[10px] text-gray-400 font-bold">লাইভ ট্র্যাকিং</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="bg-gray-900/80 p-2.5 rounded-xl border border-gray-800">
+                        <span class="text-[9px] text-gray-400 font-bold uppercase">আজকের পেজ ভিউ</span>
+                        <div id="statTodayViews" class="text-xl font-black text-cyan-400 mt-0.5">0</div>
+                        <div class="text-[9px] text-gray-500 mt-1 flex justify-between">
+                            <span>হোম: <b id="statTodayHome" class="text-gray-300">0</b></span>
+                            <span>প্লেয়ার: <b id="statTodayPlayer" class="text-gray-300">0</b></span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-900/80 p-2.5 rounded-xl border border-gray-800">
+                        <span class="text-[9px] text-gray-400 font-bold uppercase">সর্বমোট পেজ ভিউ</span>
+                        <div id="statTotalViews" class="text-xl font-black text-emerald-400 mt-0.5">0</div>
+                        <div class="text-[9px] text-gray-500 mt-1 flex justify-between">
+                            <span>হোম: <b id="statTotalHome" class="text-gray-300">0</b></span>
+                            <span>প্লেয়ার: <b id="statTotalPlayer" class="text-gray-300">0</b></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Overview Stats Bar -->
+            <div class="grid grid-cols-2 gap-2.5">
+                <div class="simple-card rounded-2xl p-3 space-y-1">
+                    <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase">
+                        <span>এখন অনলাইনে</span>
+                        <i class="fa-solid fa-circle text-rose-500 text-[8px] animate-ping"></i>
+                    </div>
+                    <div id="statLiveNow" class="text-2xl font-black text-rose-400">0</div>
+                    <p class="text-[9px] text-gray-500">বর্তমানে খেলা দেখছে</p>
+                </div>
+
+                <div class="simple-card rounded-2xl p-3 space-y-1">
+                    <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase">
+                        <span>মোট ইনস্টল</span>
+                        <i class="fa-solid fa-download text-cyan-400 text-xs"></i>
+                    </div>
+                    <div id="statTotalInstalls" class="text-2xl font-black text-cyan-400">0</div>
+                    <p class="text-[9px] text-gray-500">PWA ইনস্টলেশন সংখ্যা</p>
+                </div>
+
+                <div class="simple-card rounded-2xl p-3 space-y-1">
+                    <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase">
+                        <span>আজকের ইনস্টল</span>
+                        <i class="fa-solid fa-calendar-day text-emerald-400 text-xs"></i>
+                    </div>
+                    <div id="statTodayInstalls" class="text-2xl font-black text-emerald-400">0</div>
+                    <p class="text-[9px] text-gray-500">আজকের দিনে ইনস্টল</p>
+                </div>
+
+                <div class="simple-card rounded-2xl p-3 space-y-1">
+                    <div class="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase">
+                        <span>গড় অবস্থান টাইম</span>
+                        <i class="fa-solid fa-stopwatch text-purple-400 text-xs"></i>
+                    </div>
+                    <div id="statAvgTime" class="text-xl font-black text-purple-400">0m 0s</div>
+                    <p class="text-[9px] text-gray-500">ইউজারের অবস্থান সময়</p>
+                </div>
+            </div>
+
+            <!-- 3. Live Online Viewers (Short Summary) -->
+            <div class="simple-card rounded-2xl p-3.5 space-y-3">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                    <h2 class="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-users text-rose-500 animate-pulse"></i> অনলাইনে আছে
+                    </h2>
+                    <button onclick="openModal('live')" class="bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border border-cyan-500/30 text-[10px] px-2.5 py-1 rounded-xl font-bold transition flex items-center gap-1">
+                        <span>বিস্তারিত</span> <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                    </button>
+                </div>
+
+                <div id="liveUsersSummaryList" class="space-y-2 text-xs">
+                    <p class="text-center text-gray-500 py-2">ডাটা লোড হচ্ছে...</p>
+                </div>
+            </div>
+
+            <!-- 4. Country Wise Audience (Short Summary) -->
+            <div class="simple-card rounded-2xl p-3.5 space-y-3">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                    <h2 class="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-globe text-cyan-400"></i> দেশ ভিত্তিক ইউজার
+                    </h2>
+                    <button onclick="openModal('country')" class="bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border border-cyan-500/30 text-[10px] px-2.5 py-1 rounded-xl font-bold transition flex items-center gap-1">
+                        <span>বিস্তারিত</span> <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                    </button>
+                </div>
+
+                <div id="countrySummaryList" class="space-y-2 text-xs">
+                    <p class="text-center text-gray-500 py-2">দেশ ট্র্যাকিং হচ্ছে...</p>
+                </div>
+            </div>
+
+            <!-- 5. PWA Install History (Short Summary) -->
+            <div class="simple-card rounded-2xl p-3.5 space-y-3">
+                <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                    <h2 class="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-mobile-screen-button text-emerald-400"></i> ইনস্টল হিস্ট্রি
+                    </h2>
+                    <button onclick="openModal('install')" class="bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border border-cyan-500/30 text-[10px] px-2.5 py-1 rounded-xl font-bold transition flex items-center gap-1">
+                        <span>বিস্তারিত</span> <i class="fa-solid fa-arrow-right text-[9px]"></i>
+                    </button>
+                </div>
+
+                <div id="installSummaryList" class="space-y-2 text-xs">
+                    <p class="text-center text-gray-500 py-2">ইনস্টল রেকর্ড খোঁজা হচ্ছে...</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- 🪟 3. Universal Full Details Modal (বিস্তারিত দেখার পপআপ) -->
+    <div id="detailsModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-3">
+        <div class="simple-card w-full max-w-md h-[85vh] rounded-2xl flex flex-col overflow-hidden border border-cyan-500/30">
+            <!-- Modal Header -->
+            <div class="px-4 py-3 bg-gray-900/90 border-b border-gray-800 flex justify-between items-center">
+                <h3 id="modalTitle" class="font-extrabold text-sm text-white uppercase tracking-wider flex items-center gap-2">
+                    <!-- Title dynamic -->
+                </h3>
+                <button onclick="closeModal()" class="w-7 h-7 rounded-lg bg-gray-800 text-gray-400 hover:text-white flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content (Scrollable List) -->
+            <div id="modalBody" class="p-3 overflow-y-auto space-y-2 flex-1 text-xs">
+                <!-- Content dynamic -->
             </div>
         </div>
-
-        <!-- 2. Live Online Viewers (এখন কারা সাইটে আছে) -->
-        <div class="simple-card rounded-2xl p-3.5 space-y-3">
-            <div class="flex items-center justify-between border-b border-gray-800 pb-2">
-                <h2 class="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <i class="fa-solid fa-users text-rose-500 animate-pulse"></i> এখন অনলাইনে আছে
-                </h2>
-                <span id="liveOnlineBadge" class="bg-rose-500/10 text-rose-400 border border-rose-500/30 text-[9px] px-2 py-0.5 rounded-full font-bold">0 জন</span>
-            </div>
-
-            <div id="liveUsersList" class="space-y-2 text-xs">
-                <p class="text-center text-gray-500 py-4">ডাটা লোড হচ্ছে...</p>
-            </div>
-        </div>
-
-        <!-- 3. Country Wise Audience (কোন দেশের ইউজার বেশি) -->
-        <div class="simple-card rounded-2xl p-3.5 space-y-3">
-            <div class="flex items-center justify-between border-b border-gray-800 pb-2">
-                <h2 class="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <i class="fa-solid fa-globe text-cyan-400"></i> দেশ ভিত্তিক ইউজার
-                </h2>
-            </div>
-
-            <div id="countryList" class="space-y-2 text-xs">
-                <p class="text-center text-gray-500 py-4">দেশ ট্র্যাকিং হচ্ছে...</p>
-            </div>
-        </div>
-
-        <!-- 4. PWA Install History (ইনস্টলেশন রেকর্ড) -->
-        <div class="simple-card rounded-2xl p-3.5 space-y-3">
-            <div class="flex items-center justify-between border-b border-gray-800 pb-2">
-                <h2 class="font-extrabold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <i class="fa-solid fa-mobile-screen-button text-emerald-400"></i> অ্যাপ ইনস্টল হিস্ট্রি
-                </h2>
-            </div>
-
-            <div id="installHistoryList" class="space-y-2 text-xs">
-                <p class="text-center text-gray-500 py-4">ইনস্টল রেকর্ড খোঁজা হচ্ছে...</p>
-            </div>
-        </div>
-
-    </main>
+    </div>
 
     <script>
         // Firebase Config
@@ -135,8 +232,44 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-
         const todayStr = new Date().toISOString().split('T')[0];
+
+        // Storage Cache for Modal
+        let cacheLive = {};
+        let cacheCountry = {};
+        let cacheInstalls = [];
+
+        // --- AUTH LOGIC ---
+        function checkAuth() {
+            const isAuth = localStorage.getItem('cricton_admin_auth');
+            if (isAuth === 'true') {
+                document.getElementById('loginOverlay').classList.add('hidden');
+                document.getElementById('adminContent').classList.remove('hidden');
+                initDashboard();
+            } else {
+                document.getElementById('loginOverlay').classList.remove('hidden');
+                document.getElementById('adminContent').classList.add('hidden');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+
+            if (email === "cricton0@gmail.com" && pass === "Cricton26ar") {
+                localStorage.setItem('cricton_admin_auth', 'true');
+                checkAuth();
+            } else {
+                const err = document.getElementById('loginError');
+                err.classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('cricton_admin_auth');
+            location.reload();
+        }
 
         function formatDuration(secs) {
             if (!secs || isNaN(secs)) return '0s';
@@ -145,133 +278,228 @@
             return m > 0 ? `${m}m ${s}s` : `${s}s`;
         }
 
-        // 1. Live Online Users
-        db.ref('analytics/live_online').on('value', snap => {
-            const data = snap.val() || {};
-            const keys = Object.keys(data);
-            
-            document.getElementById('statLiveNow').innerText = keys.length;
-            document.getElementById('liveOnlineBadge').innerText = `${keys.length} জন`;
+        function getDevIcon(device) {
+            if (device === 'iOS') return '<span class="text-gray-300 font-bold bg-gray-500/10 border border-gray-500/30 px-2 py-0.5 rounded-md text-[10px]"><i class="fa-brands fa-apple text-xs mr-1"></i>iOS</span>';
+            if (device === 'Desktop') return '<span class="text-sky-400 font-bold bg-sky-500/10 border border-sky-500/30 px-2 py-0.5 rounded-md text-[10px]"><i class="fa-solid fa-desktop text-xs mr-1"></i>Desktop</span>';
+            return '<span class="text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-md text-[10px]"><i class="fa-brands fa-android text-xs mr-1"></i>Android</span>';
+        }
 
-            const listEl = document.getElementById('liveUsersList');
-            listEl.innerHTML = '';
+        // --- REALTIME DATA LISTENERS ---
+        function initDashboard() {
 
-            if (keys.length === 0) {
-                listEl.innerHTML = `<p class="text-center text-gray-500 py-4">বর্তমানে কেউ অনলাইনে নেই।</p>`;
-                return;
-            }
+            // 1. Page Views (Total and Today)
+            db.ref('analytics/page_views').on('value', snap => {
+                const data = snap.val() || {};
+                let totalHome = 0, totalPlayer = 0;
+                let todayHome = 0, todayPlayer = 0;
 
-            keys.forEach(k => {
-                const u = data[k];
+                Object.keys(data).forEach(key => {
+                    const item = data[key];
+                    const page = (item.page || '').toLowerCase();
+                    const date = item.date || (item.timestamp ? new Date(item.timestamp).toISOString().split('T')[0] : '');
+
+                    if (page.includes('player') || page.includes('stream')) {
+                        totalPlayer++;
+                        if (date === todayStr) todayPlayer++;
+                    } else {
+                        totalHome++;
+                        if (date === todayStr) todayHome++;
+                    }
+                });
+
+                document.getElementById('statTotalViews').innerText = totalHome + totalPlayer;
+                document.getElementById('statTotalHome').innerText = totalHome;
+                document.getElementById('statTotalPlayer').innerText = totalPlayer;
+
+                document.getElementById('statTodayViews').innerText = todayHome + todayPlayer;
+                document.getElementById('statTodayHome').innerText = todayHome;
+                document.getElementById('statTodayPlayer').innerText = todayPlayer;
+            });
+
+            // 2. Live Online Users
+            db.ref('analytics/live_online').on('value', snap => {
+                cacheLive = snap.val() || {};
+                const keys = Object.keys(cacheLive);
                 
-                // Beautiful Working Android / Device Icon Badge
-                let devIcon = '<span class="text-emerald-400 font-bold bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-md flex items-center gap-1 text-[10px]"><i class="fa-brands fa-android text-emerald-400 text-xs"></i> Android</span>';
-                if (u.device === 'iOS') {
-                    devIcon = '<span class="text-gray-300 font-bold bg-gray-500/10 border border-gray-500/30 px-2 py-0.5 rounded-md flex items-center gap-1 text-[10px]"><i class="fa-brands fa-apple text-xs"></i> iOS</span>';
-                } else if (u.device === 'Desktop') {
-                    devIcon = '<span class="text-sky-400 font-bold bg-sky-500/10 border border-sky-500/30 px-2 py-0.5 rounded-md flex items-center gap-1 text-[10px]"><i class="fa-solid fa-desktop text-xs"></i> Desktop</span>';
+                document.getElementById('statLiveNow').innerText = keys.length;
+
+                const summaryEl = document.getElementById('liveUsersSummaryList');
+                summaryEl.innerHTML = '';
+
+                if (keys.length === 0) {
+                    summaryEl.innerHTML = `<p class="text-center text-gray-500 py-3">বর্তমানে কেউ অনলাইনে নেই।</p>`;
+                    return;
                 }
 
-                const flagImg = u.flag ? `<img src="${u.flag}" class="w-4 h-3 inline rounded-sm mr-1.5" alt="flag">` : '';
-
-                listEl.innerHTML += `
-                    <div class="bg-gray-900/80 p-2.5 rounded-xl border border-gray-800 flex items-center justify-between">
-                        <div class="space-y-0.5">
-                            <div class="flex items-center gap-1.5 font-bold text-gray-200">
-                                ${flagImg}
-                                <span>${u.country || 'Bangladesh'}</span>
-                                <span class="text-[10px] text-gray-400">(${u.city || 'Dhaka'})</span>
+                // Show top 3 only in summary
+                keys.slice(0, 3).forEach(k => {
+                    const u = cacheLive[k];
+                    const flagImg = u.flag ? `<img src="${u.flag}" class="w-4 h-3 inline rounded-sm mr-1">` : '';
+                    summaryEl.innerHTML += `
+                        <div class="bg-gray-900/80 p-2 rounded-xl border border-gray-800 flex items-center justify-between">
+                            <div class="font-bold text-gray-200">
+                                ${flagImg} ${u.country || 'Bangladesh'} <span class="text-[10px] text-gray-400 font-normal">(${u.city || 'Dhaka'})</span>
                             </div>
-                            <div class="text-[10px] text-gray-400 font-medium">${u.isp || 'Mobile Network'} • ${u.page || 'Home'}</div>
-                        </div>
-                        <div class="text-right space-y-1">
-                            ${devIcon}
                             <div class="text-[10px] text-cyan-400 font-mono font-bold">${formatDuration(u.session_duration_secs || 0)}</div>
-                        </div>
-                    </div>`;
-            });
-        });
-
-        // 2. Installs & History
-        db.ref('pwa_analytics/installs_log').on('value', snap => {
-            const data = snap.val() || {};
-            const keys = Object.keys(data);
-
-            let todayCount = 0;
-            keys.forEach(k => {
-                if (data[k].install_date === todayStr) todayCount++;
+                        </div>`;
+                });
             });
 
-            document.getElementById('statTotalInstalls').innerText = keys.length;
-            document.getElementById('statTodayInstalls').innerText = todayCount;
+            // 3. PWA Installs
+            db.ref('pwa_analytics/installs_log').on('value', snap => {
+                const data = snap.val() || {};
+                const keys = Object.keys(data);
+                cacheInstalls = Object.values(data).reverse();
 
-            const instListEl = document.getElementById('installHistoryList');
-            instListEl.innerHTML = '';
+                let todayCount = 0;
+                keys.forEach(k => {
+                    if (data[k].install_date === todayStr) todayCount++;
+                });
 
-            if (keys.length === 0) {
-                instListEl.innerHTML = `<p class="text-center text-gray-500 py-4">কোনো ইনস্টল রেকর্ড নেই।</p>`;
-                return;
-            }
+                document.getElementById('statTotalInstalls').innerText = keys.length;
+                document.getElementById('statTodayInstalls').innerText = todayCount;
 
-            keys.slice(-10).reverse().forEach(k => {
-                const item = data[k];
-                const flagImg = item.flag ? `<img src="${item.flag}" class="w-4 h-3 inline rounded-sm mr-1.5" alt="flag">` : '';
+                const instSummaryEl = document.getElementById('installSummaryList');
+                instSummaryEl.innerHTML = '';
+
+                if (cacheInstalls.length === 0) {
+                    instSummaryEl.innerHTML = `<p class="text-center text-gray-500 py-3">কোনো ইনস্টল রেকর্ড নেই।</p>`;
+                    return;
+                }
+
+                // Show top 3 only in summary
+                cacheInstalls.slice(0, 3).forEach(item => {
+                    const flagImg = item.flag ? `<img src="${item.flag}" class="w-4 h-3 inline rounded-sm mr-1">` : '';
+                    instSummaryEl.innerHTML += `
+                        <div class="bg-gray-900/80 p-2 rounded-xl border border-gray-800 flex items-center justify-between">
+                            <div class="font-bold text-gray-200">${flagImg}${item.country || 'Bangladesh'}</div>
+                            <div class="text-[10px] text-gray-400">${item.install_date || ''}</div>
+                        </div>`;
+                });
+            });
+
+            // 4. User Stay Duration & Country Aggregation
+            db.ref('analytics/user_engagement').on('value', snap => {
+                const data = snap.val() || {};
+                const keys = Object.keys(data);
+
+                cacheCountry = {};
+                let totalTime = 0;
+
+                keys.forEach(k => {
+                    const item = data[k];
+                    if (item.country) cacheCountry[item.country] = (cacheCountry[item.country] || 0) + 1;
+                    if (item.duration_secs) totalTime += item.duration_secs;
+                });
+
+                const avgSecs = keys.length > 0 ? Math.floor(totalTime / keys.length) : 0;
+                document.getElementById('statAvgTime').innerText = formatDuration(avgSecs);
+
+                const countrySummaryEl = document.getElementById('countrySummaryList');
+                countrySummaryEl.innerHTML = '';
+
+                const sortedCountries = Object.keys(cacheCountry).sort((a,b) => cacheCountry[b] - cacheCountry[a]);
+
+                if (sortedCountries.length === 0) {
+                    countrySummaryEl.innerHTML = `<p class="text-center text-gray-500 py-3">কোনো কান্ট্রি ডাটা নেই।</p>`;
+                    return;
+                }
+
+                // Show top 3 only in summary
+                sortedCountries.slice(0, 3).forEach(c => {
+                    countrySummaryEl.innerHTML += `
+                        <div class="bg-gray-900/80 p-2 rounded-xl border border-gray-800 flex items-center justify-between">
+                            <span class="font-bold text-gray-200">${c}</span>
+                            <span class="text-cyan-400 font-bold text-xs">${cacheCountry[c]} জন</span>
+                        </div>`;
+                });
+            });
+        }
+
+        // --- MODAL / DETAILS POPUP CONTROLLER ---
+        function openModal(type) {
+            const modal = document.getElementById('detailsModal');
+            const title = document.getElementById('modalTitle');
+            const body = document.getElementById('modalBody');
+
+            body.innerHTML = '';
+            modal.classList.remove('hidden');
+
+            if (type === 'live') {
+                title.innerHTML = `<i class="fa-solid fa-users text-rose-500"></i> অনলাইন ইউজার তালিকা (${Object.keys(cacheLive).length})`;
                 
-                let devBadge = '<span class="text-emerald-400 font-bold"><i class="fa-brands fa-android text-emerald-400 mr-1"></i>Android</span>';
-                if (item.device === 'iOS') devBadge = '<span class="text-gray-300 font-bold"><i class="fa-brands fa-apple text-gray-300 mr-1"></i>iOS</span>';
-                if (item.device === 'Desktop') devBadge = '<span class="text-sky-400 font-bold"><i class="fa-solid fa-desktop mr-1"></i>Desktop</span>';
+                const keys = Object.keys(cacheLive);
+                if (keys.length === 0) {
+                    body.innerHTML = '<p class="text-center text-gray-500 py-6">কেউ অনলাইনে নেই</p>';
+                    return;
+                }
 
-                instListEl.innerHTML += `
-                    <div class="bg-gray-900/80 p-2.5 rounded-xl border border-gray-800 flex items-center justify-between">
-                        <div class="space-y-0.5">
-                            <div class="flex items-center gap-1 font-bold text-gray-200">
-                                ${flagImg}
-                                <span>${item.country || 'Bangladesh'}</span>
+                keys.forEach(k => {
+                    const u = cacheLive[k];
+                    const flagImg = u.flag ? `<img src="${u.flag}" class="w-4 h-3 inline rounded-sm mr-1.5">` : '';
+                    body.innerHTML += `
+                        <div class="bg-gray-900/90 p-3 rounded-xl border border-gray-800 flex items-center justify-between">
+                            <div class="space-y-0.5">
+                                <div class="font-bold text-white flex items-center">
+                                    ${flagImg} ${u.country || 'Bangladesh'} <span class="text-gray-400 text-[10px] font-normal ml-1">(${u.city || 'Dhaka'})</span>
+                                </div>
+                                <div class="text-[10px] text-gray-400">${u.isp || 'Mobile Network'} • ${u.page || 'Home'}</div>
                             </div>
-                            <div class="text-[10px] text-gray-400">${item.install_date || ''} • ${item.install_time || ''}</div>
-                        </div>
-                        <div class="text-right text-[11px] font-semibold">
-                            ${devBadge}
-                        </div>
-                    </div>`;
-            });
-        });
+                            <div class="text-right space-y-1">
+                                ${getDevIcon(u.device)}
+                                <div class="text-[10px] text-cyan-400 font-mono font-bold">${formatDuration(u.session_duration_secs || 0)}</div>
+                            </div>
+                        </div>`;
+                });
+            } 
+            else if (type === 'country') {
+                const sortedCountries = Object.keys(cacheCountry).sort((a,b) => cacheCountry[b] - cacheCountry[a]);
+                title.innerHTML = `<i class="fa-solid fa-globe text-cyan-400"></i> সমস্ত কান্ট্রি লিস্ট (${sortedCountries.length})`;
 
-        // 3. User Stay Duration & Country Aggregation
-        db.ref('analytics/user_engagement').on('value', snap => {
-            const data = snap.val() || {};
-            const keys = Object.keys(data);
+                if (sortedCountries.length === 0) {
+                    body.innerHTML = '<p class="text-center text-gray-500 py-6">কোন ডাটা নেই</p>';
+                    return;
+                }
 
-            const countryCount = {};
-            let totalTime = 0;
-
-            keys.forEach(k => {
-                const item = data[k];
-                if (item.country) countryCount[item.country] = (countryCount[item.country] || 0) + 1;
-                if (item.duration_secs) totalTime += item.duration_secs;
-            });
-
-            const avgSecs = keys.length > 0 ? Math.floor(totalTime / keys.length) : 0;
-            document.getElementById('statAvgTime').innerText = formatDuration(avgSecs);
-
-            const countryListEl = document.getElementById('countryList');
-            countryListEl.innerHTML = '';
-
-            const sortedCountries = Object.keys(countryCount).sort((a,b) => countryCount[b] - countryCount[a]);
-
-            if (sortedCountries.length === 0) {
-                countryListEl.innerHTML = `<p class="text-center text-gray-500 py-4">কোনো কান্ট্রি ডাটা নেই।</p>`;
-                return;
+                sortedCountries.forEach((c, idx) => {
+                    body.innerHTML += `
+                        <div class="bg-gray-900/90 p-3 rounded-xl border border-gray-800 flex items-center justify-between">
+                            <div class="font-bold text-gray-200 flex items-center gap-2">
+                                <span class="text-xs text-gray-500 w-4">#${idx+1}</span>
+                                <span>${c}</span>
+                            </div>
+                            <span class="text-cyan-400 font-extrabold text-xs bg-cyan-500/10 px-2.5 py-1 rounded-lg border border-cyan-500/20">${cacheCountry[c]} জন ইউজার</span>
+                        </div>`;
+                });
             }
+            else if (type === 'install') {
+                title.innerHTML = `<i class="fa-solid fa-mobile-screen-button text-emerald-400"></i> সমস্ত ইনস্টলেশন হিস্ট্রি (${cacheInstalls.length})`;
 
-            sortedCountries.forEach(c => {
-                countryListEl.innerHTML += `
-                    <div class="bg-gray-900/80 p-2.5 rounded-xl border border-gray-800 flex items-center justify-between">
-                        <span class="font-bold text-gray-200">${c}</span>
-                        <span class="text-cyan-400 font-extrabold text-xs">${countryCount[c]} জন ইউজার</span>
-                    </div>`;
-            });
-        });
+                if (cacheInstalls.length === 0) {
+                    body.innerHTML = '<p class="text-center text-gray-500 py-6">কোন ইনস্টল রেকর্ড নেই</p>';
+                    return;
+                }
+
+                cacheInstalls.forEach(item => {
+                    const flagImg = item.flag ? `<img src="${item.flag}" class="w-4 h-3 inline rounded-sm mr-1.5">` : '';
+                    body.innerHTML += `
+                        <div class="bg-gray-900/90 p-3 rounded-xl border border-gray-800 flex items-center justify-between">
+                            <div class="space-y-0.5">
+                                <div class="font-bold text-gray-200">${flagImg}${item.country || 'Bangladesh'}</div>
+                                <div class="text-[10px] text-gray-400">${item.install_date || ''} • ${item.install_time || ''}</div>
+                            </div>
+                            <div>${getDevIcon(item.device)}</div>
+                        </div>`;
+                });
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('detailsModal').classList.add('hidden');
+        }
+
+        // Initialize Check
+        checkAuth();
     </script>
 </body>
 </html>
