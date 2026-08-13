@@ -28,7 +28,7 @@
         .slim-card:active { transform: scale(0.98); border-color: rgba(56, 189, 248, 0.6); }
         .highlight-card { background: linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(7, 10, 19, 0.95) 100%); border: 1px solid rgba(56, 189, 248, 0.15); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5); transition: all 0.25s ease; }
         .tv-card { background: linear-gradient(145deg, rgba(15, 20, 35, 0.95), rgba(10, 12, 22, 0.95)); border: 1px solid rgba(168, 85, 247, 0.25); transition: all 0.2s ease; }
-        .glass-modal { background: rgba(8, 11, 20, 0.98); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12); }
+        .glass-modal { background: rgba(8, 11, 20, 0.95); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.15); }
         
         /* Custom Seekbar Styling */
         input[type="range"] {
@@ -57,27 +57,11 @@
             width: 100vw !important;
             height: 100vh !important;
         }
-
-        /* YouTube Style Chat Bottom Sheet Drawer Fix */
-        #chatDrawer {
-            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
-        }
-        #chatDrawer.closed {
-            display: none !important;
-            opacity: 0;
-            pointer-events: none;
-        }
-        #chatDrawer.open {
-            display: flex !important;
-            opacity: 1;
-            transform: translateY(0);
-            pointer-events: auto;
-        }
     </style>
 </head>
-<body class="max-w-md mx-auto min-h-screen relative pb-4 border-x border-gray-900/60 flex flex-col overflow-x-hidden w-full">
+<body class="max-w-md mx-auto min-h-screen relative pb-12 border-x border-gray-900/60 flex flex-col">
 
-    <!-- PWA Installation Guide Modal -->
+    <!-- PWA Installation Guide Modal (Fallback) -->
     <div id="pwaGuideOverlay" onclick="closePwaGuide()" class="fixed inset-0 bg-black/80 z-50 hidden transition-opacity backdrop-blur-sm"></div>
     <div id="pwaGuideModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-xs glass-modal rounded-3xl p-5 z-50 hidden shadow-2xl space-y-4 border border-cyan-500/30">
         <div class="flex justify-between items-center border-b border-gray-800 pb-3">
@@ -165,11 +149,11 @@
                 <span class="text-xs text-gray-400 font-bold tracking-wide">Connecting Live Stream...</span>
             </div>
 
-            <!-- HTML5 Video Element -->
+            <!-- HTML5 Video Element (Original Direct Setup) -->
             <video id="videoPlayer" onclick="togglePlay()" class="w-full h-full object-contain cursor-pointer" playsinline crossorigin="anonymous"></video>
 
-            <!-- Upgraded High-Performance Iframe Player -->
-            <iframe id="iframePlayer" class="w-full h-full hidden z-10 border-0" frameborder="0" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen; screen-wake-lock; clipboard-write" referrerpolicy="no-referrer"></iframe>
+            <!-- Iframe Player -->
+            <iframe id="iframePlayer" class="w-full h-full hidden z-10" frameborder="0" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture"></iframe>
 
             <!-- Custom Controls Overlay -->
             <div id="customControls" class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/40 transition-opacity duration-300 flex flex-col justify-between p-3 z-10 opacity-100">
@@ -208,216 +192,100 @@
         </div>
     </div>
 
-    <!-- YouTube Style Clean Details & Actions -->
-    <main class="p-3 space-y-3 flex-1 flex flex-col relative pb-4">
+    <!-- Details & Tab Section -->
+    <main class="p-3 space-y-3 flex-1 flex flex-col">
 
-        <!-- Stream Title -->
-        <div class="px-1 space-y-2">
-            <h1 id="streamTitle" class="text-sm font-extrabold text-white leading-snug">Loading Event...</h1>
-
-            <!-- YouTube Action Buttons & Stats Row -->
-            <div class="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar pt-1">
-                <div class="flex items-center gap-2">
-                    <!-- Live Watching Counter Badge -->
-                    <div class="flex items-center gap-1.5 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/30 shrink-0">
-                        <span class="relative flex h-2 w-2">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-                        </span>
-                        <span id="realViewerCount" class="text-rose-400 font-extrabold text-[10px] uppercase">1 Watching</span>
-                    </div>
-
-                    <!-- Like Button -->
-                    <button onclick="handleLike()" class="flex items-center gap-1.5 bg-gray-900 px-3 py-1.5 rounded-full border border-gray-800 text-gray-200 hover:text-rose-400 transition active:scale-95 shrink-0">
-                        <i class="fa-solid fa-heart text-rose-500 text-xs"></i>
-                        <span id="likeCountText" class="text-[11px] font-bold">0</span>
-                    </button>
+        <div class="slim-card rounded-2xl p-3 space-y-2">
+            <h1 id="streamTitle" class="text-xs font-extrabold text-white leading-snug">Loading Event...</h1>
+            
+            <div class="flex items-center justify-between text-xs pt-2 border-t border-gray-800/80">
+                <div class="flex items-center gap-1.5 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/30">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                    </span>
+                    <span id="realViewerCount" class="text-rose-400 font-bold text-[10px] tracking-wider uppercase">1 Watching</span>
                 </div>
 
-                <!-- Gift / Mobile Recharge Popup Trigger Icon Button -->
-                <button onclick="openOfferModal()" class="flex items-center gap-1.5 bg-gradient-to-r from-amber-500/20 to-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-500/40 text-[11px] font-bold active:scale-95 transition shrink-0 animate-pulse">
-                    <i class="fa-solid fa-gift text-amber-400 text-xs"></i>
-                    <span>ফ্রি রিচার্জ</span>
+                <button onclick="handleLike()" class="flex items-center gap-1.5 bg-gray-900 px-3 py-1 rounded-xl border border-gray-800 text-gray-200 hover:text-rose-400 transition">
+                    <i class="fa-solid fa-heart text-rose-500 text-xs"></i>
+                    <span id="likeCountText" class="text-[11px] font-bold">0</span>
                 </button>
             </div>
         </div>
 
-        <!-- YouTube Style Live Chat Bar Trigger -->
-        <div onclick="openChatDrawer()" class="bg-gray-900/90 hover:bg-gray-800/90 border border-cyan-500/30 rounded-2xl p-2.5 flex items-center justify-between cursor-pointer transition shadow-md active:scale-98">
-            <div class="flex items-center gap-2.5 overflow-hidden">
-                <div class="w-7 h-7 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 border border-cyan-500/30">
-                    <i class="fa-solid fa-comments text-xs"></i>
-                </div>
-                <div class="overflow-hidden">
-                    <span class="text-[11px] font-extrabold text-cyan-400 block">Live Chat</span>
-                    <span id="chatPreviewText" class="text-[10px] text-gray-400 truncate block">চ্যাট করতে বা দেখতে এখানে চাপ দিন...</span>
-                </div>
-            </div>
-            <i class="fa-solid fa-chevron-up text-cyan-400 text-xs px-1"></i>
+        <!-- Navigation Tabs -->
+        <div class="flex gap-2 border-b border-gray-800/80 pb-2">
+            <button id="tabBtnChat" onclick="switchTab('chat')" class="flex-1 py-2 rounded-xl text-xs font-extrabold bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center gap-2">
+                <i id="tabChatIcon" class="fa-solid fa-comments"></i>
+                <span id="tabChatText">Live Chat</span>
+            </button>
+            <button id="tabBtnSuggested" onclick="switchTab('suggested')" class="flex-1 py-2 rounded-xl text-xs font-extrabold bg-gray-900 border border-gray-800 text-gray-400 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-layer-group"></i>
+                <span>Suggested Streams</span>
+            </button>
         </div>
 
-        <!-- Suggested Streams Feed Below -->
-        <div class="pt-4 mt-2 space-y-2">
-            <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Suggested Streams</h3>
+        <!-- Tab 1: Live Chat -->
+        <div id="tabContentChat" class="slim-card rounded-2xl p-3 space-y-2 flex-1 flex flex-col min-h-[250px]">
+            <div id="chatMessages" class="flex-1 overflow-y-auto space-y-2 max-h-56 pr-1 no-scrollbar text-xs">
+                <p class="text-center text-gray-500 text-xs py-8">Connecting Chat...</p>
+            </div>
+
+            <form onsubmit="sendMessage(event)" class="flex items-center gap-2 pt-2 border-t border-gray-800">
+                <input type="text" id="userNameInput" placeholder="Name" class="w-20 bg-gray-900 border border-gray-800 text-white text-[11px] rounded-xl px-2 py-2 focus:outline-none focus:border-cyan-500 shrink-0">
+                <input type="text" id="chatMessageInput" placeholder="Type a message..." required class="flex-1 bg-gray-900 border border-gray-800 text-white text-[11px] rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500">
+                <button type="submit" class="bg-cyan-500 text-black px-3 py-2 rounded-xl text-xs font-bold hover:bg-cyan-400 transition shrink-0">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Tab 2: Suggested Content -->
+        <div id="tabContentSuggested" class="hidden space-y-2.5">
             <div id="suggestedGrid" class="space-y-2.5"></div>
         </div>
 
     </main>
 
-    <!-- Full-Width Modern Live Chat Drawer Container -->
-    <div id="chatDrawer" class="fixed inset-x-0 bottom-0 z-50 glass-modal rounded-t-2xl p-3 flex flex-col w-full max-w-md mx-auto border-t border-cyan-500/40 shadow-2xl closed bg-[#080b14]/98">
-        <div class="flex items-center justify-between pb-2 border-b border-gray-800/80 shrink-0">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-comments text-cyan-400 text-sm"></i>
-                <h3 class="font-bold text-xs text-white uppercase tracking-wider">Live Stream Chat</h3>
-            </div>
-            <button onclick="closeChatDrawer()" class="text-gray-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-base"></i></button>
-        </div>
-
-        <!-- Chat Messages Feed Area -->
-        <div id="chatMessages" class="flex-1 overflow-y-auto space-y-2 py-2 pr-1 no-scrollbar text-xs">
-            <p class="text-center text-gray-500 text-xs py-8">Connecting Chat...</p>
-        </div>
-
-        <!-- Chat Form Input Section -->
-        <div class="pt-2 border-t border-gray-800/80 space-y-1.5 w-full min-w-0 shrink-0">
-            
-            <!-- Reply Preview Bar -->
-            <div id="replyPreviewBar" class="hidden flex items-center justify-between bg-cyan-950/60 border-l-2 border-cyan-400 px-2 py-1 rounded-r-lg text-[10px]">
-                <div class="truncate pr-2">
-                    <span id="replyUser" class="font-bold text-cyan-400 block truncate">Replying to...</span>
-                    <span id="replyText" class="text-gray-300 truncate block">Message text</span>
-                </div>
-                <button onclick="cancelReply()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <!-- Image Preview Bar (Before Sending) -->
-            <div id="imagePreviewBar" class="hidden flex items-center justify-between bg-gray-900 border border-gray-800 p-1.5 rounded-xl">
-                <div class="flex items-center gap-2 overflow-hidden">
-                    <img id="imagePreviewImg" class="w-10 h-10 object-cover rounded-lg border border-gray-700" alt="Preview">
-                    <span class="text-[10px] text-gray-300 truncate">ছবি সংযুক্ত করা হয়েছে</span>
-                </div>
-                <button onclick="cancelImagePreview()" class="text-rose-400 hover:text-rose-300 px-2 text-xs"><i class="fa-solid fa-trash"></i></button>
-            </div>
-
-            <!-- Main Input Bar Area -->
-            <form id="chatForm" onsubmit="sendMessage(event)" class="w-full">
-                
-                <!-- Normal Mode UI -->
-                <div id="normalInputArea" class="flex items-center gap-1.5 w-full min-w-0">
-                    <input type="text" id="userNameInput" placeholder="Name" class="w-14 bg-gray-900 border border-gray-800 text-white text-[10px] rounded-xl px-2 py-2 focus:outline-none focus:border-cyan-500 shrink-0">
-                    
-                    <!-- Image Attachment Button -->
-                    <label for="chatImgInput" class="cursor-pointer bg-gray-900 border border-gray-800 text-gray-400 hover:text-cyan-400 px-2.5 py-2 rounded-xl text-xs flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-image"></i>
-                    </label>
-                    <input type="file" id="chatImgInput" accept="image/*" class="hidden" onchange="previewChatImage(event)">
-
-                    <!-- Voice Recorder Toggle Button -->
-                    <button type="button" onclick="startVoiceRecordUI()" class="bg-gray-900 border border-gray-800 text-gray-400 hover:text-rose-400 px-2.5 py-2 rounded-xl text-xs flex items-center justify-center shrink-0 transition">
-                        <i class="fa-solid fa-microphone"></i>
-                    </button>
-
-                    <input type="text" id="chatMessageInput" placeholder="Type a message..." class="flex-1 min-w-0 bg-gray-900 border border-gray-800 text-white text-[11px] rounded-xl px-2.5 py-2 focus:outline-none focus:border-cyan-500">
-                    
-                    <button type="submit" class="bg-cyan-500 text-black px-3 py-2 rounded-xl text-xs font-bold hover:bg-cyan-400 transition shrink-0">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </button>
-                </div>
-
-                <!-- WhatsApp Style Voice Recording Panel -->
-                <div id="voiceRecordingArea" class="hidden flex items-center justify-between bg-gray-900/90 border border-rose-500/40 px-3 py-1.5 rounded-xl text-xs w-full animate-pulse">
-                    <div class="flex items-center gap-2">
-                        <span class="w-2.5 h-2.5 bg-rose-500 rounded-full animate-ping"></span>
-                        <span id="voiceTimer" class="font-extrabold text-rose-400 text-xs">00:00</span>
-                        <span class="text-[10px] text-gray-400">Recording...</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <button type="button" onclick="cancelVoiceRecordUI()" class="text-gray-400 hover:text-rose-400 text-xs px-1">
-                            <i class="fa-solid fa-trash-can text-sm"></i>
-                        </button>
-                        <button type="button" onclick="stopAndSendVoiceRecordUI()" class="w-7 h-7 bg-rose-500 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition">
-                            <i class="fa-solid fa-paper-plane text-[10px]"></i>
-                        </button>
-                    </div>
-                </div>
-
-            </form>
-        </div>
-    </div>
-
-    <!-- Gift / Free Mobile Recharge Popup Modal -->
-    <div id="offerModalOverlay" onclick="closeOfferModal()" class="fixed inset-0 bg-black/80 z-50 hidden transition-opacity backdrop-blur-sm"></div>
-    <div id="offerModal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92%] max-w-xs glass-modal rounded-3xl p-4 z-50 hidden shadow-2xl space-y-3 border border-emerald-500/40 bg-gray-950">
-        <div class="flex justify-between items-center border-b border-gray-800 pb-2">
-            <span class="font-extrabold text-emerald-400 flex items-center gap-1.5 text-xs">
-                <i class="fa-solid fa-gift text-amber-400 text-sm"></i> ২০ শেয়ারে ফ্রি মোবাইল রিচার্জ!
-            </span>
-            <button onclick="closeOfferModal()" class="text-gray-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-
-        <!-- Progress Bar -->
-        <div class="space-y-1">
-            <div class="flex justify-between text-[10px] font-bold text-gray-300">
-                <span>অগ্রগতি (Progress)</span>
-                <span id="shareCountBadge" class="text-emerald-400">0 / 20 Share</span>
-            </div>
-            <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
-                <div id="shareProgressBar" class="bg-gradient-to-r from-emerald-400 to-cyan-400 h-full w-0 transition-all duration-300"></div>
-            </div>
-        </div>
-
-        <p id="shareStatusMsg" class="text-[10px] text-gray-400 leading-relaxed">
-            লাইভ স্ট্রীমটি বন্ধু ও গ্রুপে শেয়ার করুন। ২০টি শেয়ার সম্পন্ন হলে পাবেন ১০০ টাকা ফ্রি মোবাইল রিচার্জ!
-        </p>
-
-        <button onclick="executeTaskShare()" class="w-full bg-gradient-to-r from-emerald-400 to-cyan-500 text-slate-950 font-extrabold py-2 rounded-xl text-xs flex items-center justify-center gap-2 active:scale-95 transition shadow-lg shadow-emerald-500/20">
-            <i class="fa-solid fa-share-nodes"></i> স্ট্রীম শেয়ার করুন (+1 Share)
-        </button>
-
-        <!-- Claim Form (Revealed when 20 shares completed) -->
-        <div id="rechargeFormArea" class="hidden space-y-2 pt-2 border-t border-gray-800">
-            <p class="text-[10px] text-emerald-400 font-bold text-center">অভিনন্দন! আপনার ২০ শেয়ার পূর্ণ হয়েছে।</p>
-            <input type="tel" id="userPhoneInput" placeholder="017XXXXXXXX (Bkash/Recharge)" class="w-full bg-gray-900 border border-emerald-500/50 text-white text-xs rounded-xl px-3 py-2 focus:outline-none">
-            <button onclick="submitRechargeRequest()" class="w-full bg-amber-400 text-black font-extrabold py-2 rounded-xl text-xs hover:bg-amber-300 transition">
-                রিচার্জ দাবি করুন
-            </button>
-        </div>
-    </div>
-
     <script>
+        
         // PWA Install Tracking Logic for Firebase
-        window.addEventListener('appinstalled', () => {
-            recordPwaInstall();
-        });
+window.addEventListener('appinstalled', () => {
+    recordPwaInstall();
+});
 
-        function recordPwaInstall() {
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
-            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const uId = localStorage.getItem('cricton_user_id') || 'user_' + Math.random().toString(36).substr(2, 9);
-            
-            let deviceType = 'Desktop';
-            const ua = navigator.userAgent;
-            if (/android/i.test(ua)) deviceType = 'Android';
-            else if (/iPad|iPhone|iPod/i.test(ua)) deviceType = 'iOS';
+function recordPwaInstall() {
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const uId = localStorage.getItem('cricton_user_id') || 'user_' + Math.random().toString(36).substr(2, 9);
+    
+    let deviceType = 'Desktop';
+    const ua = navigator.userAgent;
+    if (/android/i.test(ua)) deviceType = 'Android';
+    else if (/iPad|iPhone|iPod/i.test(ua)) deviceType = 'iOS';
 
-            db.ref(`pwa_analytics/installs_log/${uId}`).set({
-                install_date: dateStr,
-                install_time: timeStr,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                device: deviceType,
-                user_id: uId
-            });
+    // Save to Firebase RTDB
+    db.ref(`pwa_analytics/installs_log/${uId}`).set({
+        install_date: dateStr,
+        install_time: timeStr,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        device: deviceType,
+        user_id: uId
+    });
 
-            db.ref(`pwa_analytics/daily_counts/${dateStr}/${uId}`).set(true);
-        }
-
+    db.ref(`pwa_analytics/daily_counts/${dateStr}/${uId}`).set(true);
+}
+        // Register Service Worker for PWA (Exact same as index.html)
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW Reg Error:', err));
+            navigator.serviceWorker.register('/sw.js')
+            .catch(err => console.log('SW Reg Error:', err));
         }
 
+        // PWA App Install Logic
         let deferredPrompt;
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
@@ -427,6 +295,9 @@
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('App Installed Successfully');
+                }
                 deferredPrompt = null;
             } else {
                 showPwaGuide();
@@ -458,8 +329,10 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
+        // Safe Dynamic Script Injector
         function injectPopunderScript(code) {
             if (!code || document.getElementById('cricton-popunder-holder')) return;
+            
             const holder = document.createElement('div');
             holder.id = 'cricton-popunder-holder';
             holder.style.display = 'none';
@@ -474,7 +347,9 @@
                     if (scripts[i].innerHTML) newScript.innerHTML = scripts[i].innerHTML;
                     Array.from(scripts[i].attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
                     document.head.appendChild(newScript);
-                } catch(e) {}
+                } catch(e) {
+                    console.error("Ad script injection error:", e);
+                }
             }
         }
 
@@ -494,13 +369,10 @@
         let activeUrl = '';
         let hlsInstance = null;
         let isShareOpen = false;
-        let isChatOpen = false;
 
         window.addEventListener('popstate', (e) => {
             if (isShareOpen) {
                 closeShareModal(false);
-            } else if (isChatOpen) {
-                closeChatDrawer(false);
             } else {
                 window.location.href = 'index.html';
             }
@@ -536,9 +408,11 @@
                 const hrs = Math.floor(totalSecs / 3600);
                 const mins = Math.floor((totalSecs % 3600) / 60);
                 const secs = totalSecs % 60;
+                
                 let elapsedTimeStr = hrs > 0 
                     ? `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}` 
                     : `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+
                 return { status: 'LIVE', elapsed: elapsedTimeStr };
             }
 
@@ -573,14 +447,13 @@
         }
         
         const nameInput = document.getElementById('userNameInput');
-        if(nameInput) {
-            nameInput.value = localStorage.getItem('cricton_user_name');
-            const saveUserName = () => {
-                if(nameInput.value.trim()) localStorage.setItem('cricton_user_name', nameInput.value.trim());
-            };
-            nameInput.addEventListener('change', saveUserName);
-            nameInput.addEventListener('blur', saveUserName);
-        }
+        nameInput.value = localStorage.getItem('cricton_user_name');
+        
+        const saveUserName = () => {
+            if(nameInput.value.trim()) localStorage.setItem('cricton_user_name', nameInput.value.trim());
+        };
+        nameInput.addEventListener('change', saveUserName);
+        nameInput.addEventListener('blur', saveUserName);
 
         let isSetupCompleted = false;
 
@@ -604,6 +477,7 @@
         function renderInfo() {
             const title = currentData.title || currentData.name || 'Live Event';
             document.getElementById('streamTitle').innerText = title;
+            document.getElementById('tabChatText').innerText = (itemType === 'banners') ? "Comments" : "Live Chat";
 
             let servers = [];
             if (currentData.servers && Array.isArray(currentData.servers) && currentData.servers.length > 0) {
@@ -672,7 +546,7 @@
             }
         }
 
-        // Upgraded High-Level Video Player Engine
+        // Original Simple & Direct Player Engine (No Tap Overlay)
         function playSource(url) {
             activeUrl = url;
             loader.classList.remove('hidden');
@@ -687,11 +561,7 @@
                 
                 iframe.classList.remove('hidden');
                 iframe.src = url;
-                
-                iframe.onload = () => {
-                    loader.classList.add('hidden');
-                };
-                setTimeout(() => loader.classList.add('hidden'), 2500);
+                loader.classList.add('hidden');
             } else {
                 iframe.classList.add('hidden');
                 iframe.src = '';
@@ -705,9 +575,7 @@
                         enableWorker: true,
                         lowLatencyMode: true,
                         backBufferLength: 90,
-                        maxBufferLength: 30,
-                        liveSyncDurationCount: 3,
-                        autoStartLoad: true
+                        maxBufferLength: 30
                     });
 
                     hlsInstance.loadSource(url);
@@ -772,7 +640,9 @@
                     if (screen.orientation && screen.orientation.lock) {
                         await screen.orientation.lock('landscape').catch(() => {});
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.log("Fullscreen request error:", e);
+                }
             } else {
                 try {
                     if (document.exitFullscreen) {
@@ -801,6 +671,7 @@
             }
         }
 
+        // Live Safe Seekbar Fix
         video.addEventListener('timeupdate', () => {
             const seekBar = document.getElementById('seekBar');
             const timeDisplay = document.getElementById('timeDisplay');
@@ -826,6 +697,7 @@
             }
         });
 
+        // Presence & Likes Setup
         function setupPresenceAndLikes() {
             const myViewerRef = db.ref(`viewers/${itemType}_${itemId}/${userId}`);
             const viewersListRef = db.ref(`viewers/${itemType}_${itemId}`);
@@ -876,320 +748,74 @@
             }
         }
 
-        // Chat Drawer Open/Close Logic (Completely removes element when closed)
-        function openChatDrawer() {
-            isChatOpen = true;
-            history.pushState({ modal: 'chat' }, '');
-            const drawer = document.getElementById('chatDrawer');
-            drawer.classList.remove('closed');
-            drawer.classList.add('open');
-            document.body.classList.add('overflow-hidden');
-        }
-
-        function closeChatDrawer(pushHistory = true) {
-            isChatOpen = false;
-            const drawer = document.getElementById('chatDrawer');
-            drawer.classList.remove('open');
-            drawer.classList.add('closed');
-            document.body.classList.remove('overflow-hidden');
-        }
-
-        // Offer Popup Modal Open/Close Logic
-        function openOfferModal() {
-            document.getElementById('offerModalOverlay').classList.remove('hidden');
-            document.getElementById('offerModal').classList.remove('hidden');
-            initTaskShareUI();
-        }
-
-        function closeOfferModal() {
-            document.getElementById('offerModalOverlay').classList.add('hidden');
-            document.getElementById('offerModal').classList.add('hidden');
-        }
-
-        // Global variables for Image Preview & Reply & Voice System
-        let activeReplyData = null;
-        let selectedImgFile = null;
-        let voiceRecorderObj = null;
-        let voiceChunks = [];
-        let voiceTimerInterval = null;
-        let voiceSeconds = 0;
-
-        // Reply Logic
-        function setReply(userName, msgText) {
-            activeReplyData = { name: userName, text: msgText };
-            document.getElementById('replyUser').innerText = `Replying to ${userName}`;
-            document.getElementById('replyText').innerText = msgText || 'Media';
-            document.getElementById('replyPreviewBar').classList.remove('hidden');
-        }
-
-        function cancelReply() {
-            activeReplyData = null;
-            document.getElementById('replyPreviewBar').classList.add('hidden');
-        }
-
-        // Image Preview Logic
-        function previewChatImage(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            selectedImgFile = file;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('imagePreviewImg').src = e.target.result;
-                document.getElementById('imagePreviewBar').classList.remove('hidden');
-            }
-            reader.readAsDataURL(file);
-        }
-
-        function cancelImagePreview() {
-            selectedImgFile = null;
-            document.getElementById('chatImgInput').value = '';
-            document.getElementById('imagePreviewBar').classList.add('hidden');
-        }
-
-        // Voice Recorder Logic
-        async function startVoiceRecordUI() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                voiceRecorderObj = new MediaRecorder(stream);
-                voiceChunks = [];
-
-                voiceRecorderObj.ondataavailable = e => voiceChunks.push(e.data);
-                voiceRecorderObj.start();
-
-                document.getElementById('normalInputArea').classList.add('hidden');
-                document.getElementById('voiceRecordingArea').classList.remove('hidden');
-
-                voiceSeconds = 0;
-                document.getElementById('voiceTimer').innerText = '00:00';
-                voiceTimerInterval = setInterval(() => {
-                    voiceSeconds++;
-                    const m = String(Math.floor(voiceSeconds / 60)).padStart(2, '0');
-                    const s = String(voiceSeconds % 60).padStart(2, '0');
-                    document.getElementById('voiceTimer').innerText = `${m}:${s}`;
-                }, 1000);
-
-            } catch (err) {
-                alert('মাইক্রোফোন পারমিশন প্রয়োজন!');
-            }
-        }
-
-        function cancelVoiceRecordUI() {
-            if (voiceRecorderObj && voiceRecorderObj.state !== 'inactive') {
-                voiceRecorderObj.stop();
-                voiceRecorderObj.stream.getTracks().forEach(track => track.stop());
-            }
-            clearInterval(voiceTimerInterval);
-            document.getElementById('voiceRecordingArea').classList.add('hidden');
-            document.getElementById('normalInputArea').classList.remove('hidden');
-        }
-
-        function stopAndSendVoiceRecordUI() {
-            if (!voiceRecorderObj) return;
-
-            voiceRecorderObj.onstop = () => {
-                const audioBlob = new Blob(voiceChunks, { type: 'audio/webm' });
-                const reader = new FileReader();
-                reader.readAsDataURL(audioBlob);
-                reader.onloadend = () => {
-                    const base64Audio = reader.result;
-                    const name = document.getElementById('userNameInput').value.trim() || 'Fan';
-                    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                    const chatData = {
-                        name: name,
-                        type: 'audio',
-                        mediaUrl: base64Audio,
-                        time: timeStr,
-                        timestamp: Date.now()
-                    };
-
-                    if (activeReplyData) chatData.replyTo = activeReplyData;
-
-                    db.ref(`chats/${itemId}`).push(chatData);
-                    cancelReply();
-                };
-                voiceRecorderObj.stream.getTracks().forEach(track => track.stop());
-            };
-
-            voiceRecorderObj.stop();
-            clearInterval(voiceTimerInterval);
-            document.getElementById('voiceRecordingArea').classList.add('hidden');
-            document.getElementById('normalInputArea').classList.remove('hidden');
-        }
-
-        // Live Chat Setup & Message Rendering
+        // Live Chat Setup
         function setupLiveChat() {
             const chatBox = document.getElementById('chatMessages');
-            const chatPreview = document.getElementById('chatPreviewText');
-
             db.ref(`chats/${itemId}`).limitToLast(40).on('value', snap => {
                 chatBox.innerHTML = '';
                 const data = snap.val();
                 if (data) {
-                    let lastMsgText = '';
                     Object.keys(data).forEach(k => {
                         const msg = data[k];
                         const initial = (msg.name || 'U').charAt(0).toUpperCase();
-                        
-                        let replyHTML = '';
-                        if (msg.replyTo) {
-                            replyHTML = `
-                                <div class="bg-cyan-950/80 border-l-2 border-cyan-400 px-2 py-0.5 rounded text-[9px] mb-1">
-                                    <span class="font-bold text-cyan-400">${msg.replyTo.name}</span>
-                                    <p class="text-gray-300 truncate">${msg.replyTo.text}</p>
-                                </div>`;
-                        }
-
-                        let bodyContent = `<p class="text-[11px] text-gray-200 break-words">${msg.text || ''}</p>`;
-                        lastMsgText = `${msg.name || 'Fan'}: ${msg.text || 'Sent media'}`;
-
-                        if (msg.type === 'image') {
-                            bodyContent = `
-                                ${msg.text ? `<p class="text-[11px] text-gray-200 break-words mb-1">${msg.text}</p>` : ''}
-                                <img src="${msg.mediaUrl}" class="max-w-[180px] rounded-xl border border-gray-700 my-1 cursor-pointer" onclick="window.open('${msg.mediaUrl}', '_blank')">`;
-                        } else if (msg.type === 'audio') {
-                            bodyContent = `<audio controls src="${msg.mediaUrl}" class="w-full max-w-[200px] h-8 my-1"></audio>`;
-                        }
-
                         chatBox.innerHTML += `
-                            <div class="flex items-start gap-2 bg-gray-900/80 p-2 rounded-xl border border-gray-800 group relative">
+                            <div class="flex items-start gap-2 bg-gray-900/80 p-2 rounded-xl border border-gray-800">
                                 <div class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 font-extrabold text-[10px] flex items-center justify-center shrink-0 border border-cyan-500/30">
                                     ${initial}
                                 </div>
                                 <div class="overflow-hidden flex-1 space-y-0.5">
                                     <div class="flex items-center justify-between">
                                         <span class="font-bold text-[10px] text-cyan-400 truncate">${msg.name || 'Fan'}</span>
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-[8px] text-gray-500">${msg.time || ''}</span>
-                                            <button onclick="setReply('${msg.name || 'Fan'}', '${(msg.text || 'Media').replace(/'/g, "\\'")}')" class="text-gray-400 hover:text-cyan-400 text-[10px]">
-                                                <i class="fa-solid fa-reply"></i>
-                                            </button>
-                                        </div>
+                                        <span class="text-[8px] text-gray-500">${msg.time || ''}</span>
                                     </div>
-                                    ${replyHTML}
-                                    ${bodyContent}
+                                    <p class="text-[11px] text-gray-200 break-words">${msg.text}</p>
                                 </div>
                             </div>`;
                     });
-                    if (chatPreview && lastMsgText) chatPreview.innerText = lastMsgText;
                     chatBox.scrollTop = chatBox.scrollHeight;
                 } else {
                     chatBox.innerHTML = `<p class="text-center text-gray-500 text-xs py-8">No messages yet. Start the conversation!</p>`;
-                    if (chatPreview) chatPreview.innerText = "চ্যাট করতে বা দেখতে এখানে চাপ দিন...";
                 }
             });
         }
 
-        // Chat Send Handler
         function sendMessage(e) {
             e.preventDefault();
             const msgInput = document.getElementById('chatMessageInput');
             const text = msgInput.value.trim();
             const name = document.getElementById('userNameInput').value.trim() || 'Fan';
 
-            if (!text && !selectedImgFile) return;
+            if (!text) return;
 
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const chatData = {
+
+            db.ref(`chats/${itemId}`).push({
                 name: name,
+                text: text,
                 time: timeStr,
                 timestamp: Date.now()
-            };
-
-            if (text) chatData.text = text;
-            if (activeReplyData) chatData.replyTo = activeReplyData;
-
-            if (selectedImgFile) {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    chatData.type = 'image';
-                    chatData.mediaUrl = evt.target.result;
-                    db.ref(`chats/${itemId}`).push(chatData);
-                    cancelImagePreview();
-                    cancelReply();
-                    msgInput.value = '';
-                };
-                reader.readAsDataURL(selectedImgFile);
-            } else {
-                db.ref(`chats/${itemId}`).push(chatData);
-                cancelReply();
-                msgInput.value = '';
-            }
-        }
-
-        // Native Share Sheet & Task System (Shares to ANY app)
-        const SHARE_GOAL = 20;
-
-        function getShareTaskKey() {
-            return `cricton_shares_${itemId}_${userId}`;
-        }
-
-        async function executeTaskShare() {
-            const title = currentData ? (currentData.title || currentData.name || 'Live Event') : 'Live Event';
-            const pageUrl = window.location.href;
-            const text = `Watch ${title} Live on CRICTON:`;
-
-            const incrementShareCount = () => {
-                const key = getShareTaskKey();
-                let count = parseInt(localStorage.getItem(key) || '0');
-                count++;
-                localStorage.setItem(key, count.toString());
-                initTaskShareUI();
-            };
-
-            // Triggers Native Share Sheet for all apps (Android/iOS)
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: title,
-                        text: text,
-                        url: pageUrl
-                    });
-                    incrementShareCount();
-                } catch (err) {
-                    console.log("Share cancelled or failed");
-                }
-            } else {
-                // Fallback if browser doesn't support Web Share API
-                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + pageUrl)}`, '_blank');
-                incrementShareCount();
-            }
-        }
-
-        function initTaskShareUI() {
-            const key = getShareTaskKey();
-            const count = parseInt(localStorage.getItem(key) || '0');
-            const progress = Math.min(100, (count / SHARE_GOAL) * 100);
-
-            const bar = document.getElementById('shareProgressBar');
-            const badge = document.getElementById('shareCountBadge');
-            const formArea = document.getElementById('rechargeFormArea');
-
-            if(bar) bar.style.width = `${progress}%`;
-            if(badge) badge.innerText = `${count} / ${SHARE_GOAL} Share`;
-
-            if (count >= SHARE_GOAL && formArea) {
-                formArea.classList.remove('hidden');
-            }
-        }
-
-        function submitRechargeRequest() {
-            const phone = document.getElementById('userPhoneInput').value.trim();
-            if (!phone || phone.length < 11) {
-                alert('অনুগ্রহ করে সঠিক মোবাইল নম্বর দিন!');
-                return;
-            }
-
-            db.ref(`recharge_requests/${userId}`).set({
-                phone: phone,
-                item_id: itemId,
-                user_id: userId,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
             });
 
-            alert('আপনার রিচার্জ আবেদনটি সফলভাবে জমা হয়েছে!');
-            closeOfferModal();
+            msgInput.value = '';
+        }
+
+        function switchTab(tabName) {
+            const btnChat = document.getElementById('tabBtnChat');
+            const btnSugg = document.getElementById('tabBtnSuggested');
+            const contentChat = document.getElementById('tabContentChat');
+            const contentSugg = document.getElementById('tabContentSuggested');
+
+            if (tabName === 'chat') {
+                btnChat.className = "flex-1 py-2 rounded-xl text-xs font-extrabold bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center gap-2";
+                btnSugg.className = "flex-1 py-2 rounded-xl text-xs font-extrabold bg-gray-900 border border-gray-800 text-gray-400 flex items-center justify-center gap-2";
+                contentChat.classList.remove('hidden');
+                contentSugg.classList.add('hidden');
+            } else {
+                btnSugg.className = "flex-1 py-2 rounded-xl text-xs font-extrabold bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center gap-2";
+                btnChat.className = "flex-1 py-2 rounded-xl text-xs font-extrabold bg-gray-900 border border-gray-800 text-gray-400 flex items-center justify-center gap-2";
+                contentSugg.classList.remove('hidden');
+                contentChat.classList.add('hidden');
+            }
         }
 
         function loadSuggested() {
@@ -1328,6 +954,7 @@
             window.location.href = targetPlayerUrl;
         }
 
+        // Share Card Modal Functions
         function openShareModal() {
             isShareOpen = true;
             history.pushState({ modal: 'share' }, '');
@@ -1361,84 +988,135 @@
             btnText.innerText = "Link Copied!";
             setTimeout(() => { btnText.innerText = "Copy Stream Link"; }, 2000);
         }
+        // Safe Silent IP Geo Location API
+async function getUserGeoLocation() {
+    const cached = localStorage.getItem('cricton_user_geo');
+    if (cached) {
+        try { return JSON.parse(cached); } catch(e) {}
+    }
+    
+    const defaultGeo = { 
+        country: 'Bangladesh', 
+        country_code: 'BD', 
+        city: 'Dhaka', 
+        isp: 'Mobile/WiFi', 
+        flag: 'https://flagcdn.com/24x18/bd.png' 
+    };
 
-        // Analytics Tracker
-        async function getUserGeoLocation() {
-            const cached = localStorage.getItem('cricton_user_geo');
-            if (cached) { try { return JSON.parse(cached); } catch(e) {} }
-            const defaultGeo = { country: 'Bangladesh', country_code: 'BD', city: 'Dhaka', isp: 'Mobile/WiFi', flag: 'https://flagcdn.com/24x18/bd.png' };
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000);
-                const res = await fetch('https://ipapi.co/json/', { signal: controller.signal }).catch(() => null);
-                clearTimeout(timeoutId);
-                if (res && res.ok) {
-                    const data = await res.json().catch(() => null);
-                    if (data && data.country_name) {
-                        const geo = { country: data.country_name, country_code: data.country_code, city: data.city || 'Unknown', isp: data.org || 'Mobile/WiFi', flag: `https://flagcdn.com/24x18/${data.country_code.toLowerCase()}.png` };
-                        localStorage.setItem('cricton_user_geo', JSON.stringify(geo));
-                        return geo;
-                    }
-                }
-            } catch (err) {}
-            return defaultGeo;
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch('https://ipapi.co/json/', { signal: controller.signal }).catch(() => null);
+        clearTimeout(timeoutId);
+
+        if (res && res.ok) {
+            const data = await res.json().catch(() => null);
+            if (data && data.country_name && data.country_code) {
+                const geo = {
+                    country: data.country_name,
+                    country_code: data.country_code,
+                    city: data.city || 'Unknown',
+                    isp: data.org || 'Mobile/WiFi',
+                    flag: `https://flagcdn.com/24x18/${data.country_code.toLowerCase()}.png`
+                };
+                localStorage.setItem('cricton_user_geo', JSON.stringify(geo));
+                return geo;
+            }
         }
+    } catch (err) {}
 
-        const sessionStartTime = Date.now();
+    localStorage.setItem('cricton_user_geo', JSON.stringify(defaultGeo));
+    return defaultGeo;
+}
 
-        async function initGlobalAnalyticsTracker() {
-            const geo = await getUserGeoLocation();
-            const uId = localStorage.getItem('cricton_user_id') || ('user_' + Math.random().toString(36).substr(2, 9));
-            localStorage.setItem('cricton_user_id', uId);
+const sessionStartTime = Date.now();
 
-            const ua = navigator.userAgent;
-            let deviceType = 'Desktop';
-            if (/android/i.test(ua)) deviceType = 'Android';
-            else if (/iPad|iPhone|iPod/i.test(ua)) deviceType = 'iOS';
+async function initGlobalAnalyticsTracker() {
+    const geo = await getUserGeoLocation();
+    const uId = localStorage.getItem('cricton_user_id') || ('user_' + Math.random().toString(36).substr(2, 9));
+    localStorage.setItem('cricton_user_id', uId);
 
-            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            const netType = conn ? (conn.effectiveType || conn.type || '4G/WiFi').toUpperCase() : '4G/WiFi';
+    // Device Type Detection
+    const ua = navigator.userAgent;
+    let deviceType = 'Desktop';
+    if (/android/i.test(ua)) deviceType = 'Android';
+    else if (/iPad|iPhone|iPod/i.test(ua)) deviceType = 'iOS';
 
-            const presenceRef = db.ref(`analytics/live_online/${uId}`);
-            db.ref('.info/connected').on('value', snap => {
-                if (snap.val() === true) {
-                    presenceRef.onDisconnect().remove();
-                    presenceRef.set({
-                        user_id: uId,
-                        joined_at: firebase.database.ServerValue.TIMESTAMP,
-                        country: geo.country,
-                        country_code: geo.country_code,
-                        city: geo.city,
-                        isp: geo.isp,
-                        flag: geo.flag,
-                        page: 'Player Page',
-                        device: deviceType,
-                        network: netType
-                    });
-                }
+    // Connection Type (4G/WiFi)
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const netType = conn ? (conn.effectiveType || conn.type || '4G/WiFi').toUpperCase() : '4G/WiFi';
+
+    const pageName = window.location.pathname.includes('player') ? 'Player Page' : 'Home Page';
+
+    // Realtime Online Presence
+    const presenceRef = db.ref(`analytics/live_online/${uId}`);
+    db.ref('.info/connected').on('value', snap => {
+        if (snap.val() === true) {
+            presenceRef.onDisconnect().remove();
+            presenceRef.set({
+                user_id: uId,
+                joined_at: firebase.database.ServerValue.TIMESTAMP,
+                country: geo.country,
+                country_code: geo.country_code,
+                city: geo.city,
+                isp: geo.isp,
+                flag: geo.flag,
+                page: pageName,
+                device: deviceType,
+                network: netType
             });
-
-            setInterval(() => {
-                const durationSecs = Math.floor((Date.now() - sessionStartTime) / 1000);
-                presenceRef.update({ session_duration_secs: durationSecs, last_active: Date.now() });
-
-                db.ref(`analytics/user_engagement/${uId}`).set({
-                    user_id: uId,
-                    country: geo.country,
-                    country_code: geo.country_code,
-                    city: geo.city,
-                    isp: geo.isp,
-                    flag: geo.flag,
-                    last_seen: firebase.database.ServerValue.TIMESTAMP,
-                    duration_secs: durationSecs,
-                    device: deviceType,
-                    network: netType,
-                    date: new Date().toISOString().split('T')[0]
-                });
-            }, 5000);
         }
+    });
 
-        initGlobalAnalyticsTracker();
+    // Stay Time Heartbeat
+    setInterval(() => {
+        const durationSecs = Math.floor((Date.now() - sessionStartTime) / 1000);
+        presenceRef.update({ session_duration_secs: durationSecs, last_active: Date.now() });
+
+        db.ref(`analytics/user_engagement/${uId}`).set({
+            user_id: uId,
+            country: geo.country,
+            country_code: geo.country_code,
+            city: geo.city,
+            isp: geo.isp,
+            flag: geo.flag,
+            last_seen: firebase.database.ServerValue.TIMESTAMP,
+            duration_secs: durationSecs,
+            device: deviceType,
+            network: netType,
+            date: new Date().toISOString().split('T')[0]
+        });
+    }, 5000);
+}
+
+// PWA Install Tracker
+window.addEventListener('appinstalled', async () => {
+    const geo = await getUserGeoLocation();
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const uId = localStorage.getItem('cricton_user_id') || 'user_' + Math.random().toString(36).substr(2, 9);
+    
+    const ua = navigator.userAgent;
+    let deviceType = 'Desktop';
+    if (/android/i.test(ua)) deviceType = 'Android';
+    else if (/iPad|iPhone|iPod/i.test(ua)) deviceType = 'iOS';
+
+    db.ref(`pwa_analytics/installs_log/${uId}`).set({
+        install_date: dateStr,
+        install_time: timeStr,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        device: deviceType,
+        user_id: uId,
+        country: geo.country,
+        country_code: geo.country_code,
+        city: geo.city,
+        isp: geo.isp,
+        flag: geo.flag
+    });
+});
+
+initGlobalAnalyticsTracker();ticsTracker();
     </script>
 </body>
 </html>
