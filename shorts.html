@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CRICTON Shorts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
+        body { background: #000; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; height: 100vh; width: 100vw; margin: 0; }
+        .reels-container { scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; }
+        .reel-item { scroll-snap-align: start; scroll-snap-stop: always; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes heartBurst {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+        .heart-animate { animation: heartBurst 0.8s ease-out forwards; }
+        @keyframes spinSlow { 100% { transform: rotate(360deg); } }
+        .disc-spin { animation: spinSlow 4s linear infinite; }
+    </style>
+</head>
+<body class="bg-black text-white select-none">
+
+    <!-- Top Overlay Header -->
+    <div class="fixed top-0 inset-x-0 z-20 p-3 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/20 to-transparent pointer-events-none">
+        <div class="flex items-center gap-2 pointer-events-auto">
+            <img src="https://i.postimg.cc/6q0pMkty/20260803-110152.jpg" class="w-8 h-8 rounded-full border border-cyan-400 p-0.5 object-cover shadow-lg">
+            <span class="font-extrabold text-sm tracking-wider text-white flex items-center gap-1">
+                CRICTON <span class="text-rose-500 text-xs font-black uppercase">Shorts</span>
+            </span>
+        </div>
+        <div id="volumeStatus" class="pointer-events-auto bg-black/50 backdrop-blur-md p-2 rounded-full text-xs text-white/80 border border-white/10 hidden">
+            <i id="volIcon" class="fa-solid fa-volume-xmark"></i>
+        </div>
+    </div>
+
+    <!-- Main Reels Scroll Container -->
+    <div id="reelsWrapper" class="reels-container h-full w-full overflow-y-scroll overflow-x-hidden no-scrollbar relative">
+        <!-- Loader Skeleton -->
+        <div class="reel-item h-full w-full flex flex-col items-center justify-center bg-[#070912] space-y-3">
+            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-cyan-400"></i>
+            <p class="text-xs text-gray-400 font-bold tracking-wider">Loading Shorts...</p>
+        </div>
+    </div>
+
+    <!-- Instagram Style Comments Bottom Sheet Modal -->
+    <div id="commentBackdrop" onclick="toggleComments(false)" class="fixed inset-0 bg-black/60 z-40 hidden transition-opacity backdrop-blur-sm"></div>
+    <div id="commentModal" class="fixed inset-x-0 bottom-0 max-w-md mx-auto h-[60vh] bg-[#0c101d] border-t border-gray-800 rounded-t-3xl z-50 transform translate-y-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="p-3.5 border-b border-gray-800 flex items-center justify-between">
+            <span class="text-xs font-extrabold text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-regular fa-comment-dots text-cyan-400"></i> Comments (<span id="modalCommentCount">0</span>)
+            </span>
+            <button onclick="toggleComments(false)" class="text-gray-400 hover:text-white p-1 text-sm"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        
+        <div id="commentsList" class="flex-1 overflow-y-auto p-4 space-y-3.5 no-scrollbar">
+            <!-- Dynamic comments here -->
+        </div>
+
+        <div class="p-3 border-t border-gray-800 bg-[#080b14]/95 flex items-center gap-2">
+            <input type="text" id="commentInput" placeholder="Add a nice comment..." class="flex-1 bg-gray-900 border border-gray-700/80 rounded-full px-4 py-2 text-xs text-white focus:outline-none focus:border-cyan-400 placeholder-gray-500">
+            <button onclick="submitComment()" class="bg-cyan-500 hover:bg-cyan-400 text-black px-4 py-2 rounded-full text-xs font-black flex items-center justify-center transition">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyD_HBGuQSh_GzqrHqHbgdaoBikLZsK3Qqs",
+            authDomain: "new-all-f99f7.firebaseapp.com",
+            databaseURL: "https://new-all-f99f7-default-rtdb.firebaseio.com",
+            projectId: "new-all-f99f7",
+            storageBucket: "new-all-f99f7.firebasestorage.app",
+            messagingSenderId: "1069748173900",
+            appId: "1:1069748173900:web:158d6336c0f4628133c8e9"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let shortsList = [];
+        let activeShortId = null;
+        let isGlobalMuted = false;
+        let currentHlsInstances = {};
+        const uId = localStorage.getItem('cricton_user_id') || ('user_' + Math.random().toString(36).substr(2, 9));
+        localStorage.setItem('cricton_user_id', uId);
+
+        // Fetch Shorts Realtime
+        db.ref('shorts').on('value', snap => {
+            const data = snap.val() || {};
+            shortsList = Object.keys(data).map(key => ({ id: key, ...data[key] })).reverse();
+            renderReels();
+        });
+
+        function renderReels() {
+            const wrapper = document.getElementById('reelsWrapper');
+            if (shortsList.length === 0) {
+                wrapper.innerHTML = `
+                    <div class="reel-item h-full w-full flex flex-col items-center justify-center text-center p-6 space-y-2">
+                        <i class="fa-solid fa-clapperboard text-4xl text-gray-600"></i>
+                        <p class="text-xs font-bold text-gray-400">No Shorts Available Yet</p>
+                    </div>`;
+                return;
+            }
+
+            wrapper.innerHTML = '';
+            shortsList.forEach((item, index) => {
+                const isLiked = localStorage.getItem(`cricton_short_liked_${item.id}`) === 'true';
+                const div = document.createElement('div');
+                div.className = "reel-item h-full w-full relative flex items-center justify-center bg-black overflow-hidden";
+                div.dataset.index = index;
+                div.dataset.id = item.id;
+                div.dataset.videoUrl = item.videoUrl;
+
+                div.innerHTML = `
+                    <!-- Video Element -->
+                    <video id="video-${item.id}" playsinline loop preload="metadata" class="w-full h-full object-cover" ${isGlobalMuted ? 'muted' : ''}></video>
+                    
+                    <!-- Tap Gesture Layer -->
+                    <div onclick="handleVideoTap(event, '${item.id}')" class="absolute inset-0 z-10"></div>
+
+                    <!-- Heart Animation Burst on Double Tap -->
+                    <div id="heartBurst-${item.id}" class="absolute inset-0 flex items-center justify-center pointer-events-none z-20 hidden">
+                        <i class="fa-solid fa-heart text-rose-500 text-8xl drop-shadow-2xl heart-animate"></i>
+                    </div>
+
+                    <!-- Right Side Actions Bar (Instagram / TikTok Style) -->
+                    <div class="absolute right-2.5 bottom-12 z-20 flex flex-col items-center gap-4 text-center">
+                        <!-- Profile Pic -->
+                        <div class="relative mb-2">
+                            <img src="https://i.postimg.cc/6q0pMkty/20260803-110152.jpg" class="w-10 h-10 rounded-full border-2 border-rose-500 object-cover shadow-lg">
+                            <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-rose-500 text-white rounded-full w-4 h-4 text-[9px] flex items-center justify-center font-black shadow">+</div>
+                        </div>
+
+                        <!-- Like Button -->
+                        <button onclick="toggleLike('${item.id}')" class="flex flex-col items-center gap-1 group">
+                            <div class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 active:scale-75 transition duration-150">
+                                <i id="likeIcon-${item.id}" class="fa-solid fa-heart text-lg ${isLiked ? 'text-rose-500' : 'text-white'}"></i>
+                            </div>
+                            <span id="likeCount-${item.id}" class="text-[11px] font-extrabold text-white/90 drop-shadow">${formatCount(item.likes || 0)}</span>
+                        </button>
+
+                        <!-- Comment Button -->
+                        <button onclick="openComments('${item.id}')" class="flex flex-col items-center gap-1">
+                            <div class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 active:scale-75 transition duration-150">
+                                <i class="fa-solid fa-comment-dots text-lg text-white"></i>
+                            </div>
+                            <span id="commentCount-${item.id}" class="text-[11px] font-extrabold text-white/90 drop-shadow">${formatCount(item.comments_count || 0)}</span>
+                        </button>
+
+                        <!-- Share Button -->
+                        <button onclick="shareShort('${item.id}', '${item.title}')" class="flex flex-col items-center gap-1">
+                            <div class="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 active:scale-75 transition duration-150">
+                                <i class="fa-solid fa-share text-lg text-white"></i>
+                            </div>
+                            <span class="text-[11px] font-extrabold text-white/90 drop-shadow">Share</span>
+                        </button>
+
+                        <!-- Music Rotating Disc -->
+                        <div class="w-9 h-9 rounded-full bg-gray-900 border-2 border-gray-700 flex items-center justify-center disc-spin shadow-lg mt-1">
+                            <img src="https://i.postimg.cc/6q0pMkty/20260803-110152.jpg" class="w-5 h-5 rounded-full object-cover">
+                        </div>
+                    </div>
+
+                    <!-- Bottom Details Overlay -->
+                    <div class="absolute bottom-3 left-3 right-16 z-20 space-y-1.5 pointer-events-none drop-shadow-md">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-extrabold text-xs text-white tracking-wide">@cricton_official</span>
+                            <i class="fa-solid fa-circle-check text-cyan-400 text-[10px]"></i>
+                        </div>
+                        <p class="text-xs text-gray-100 font-medium line-clamp-2 leading-snug">${item.title || 'Live Sports Highlight'}</p>
+                        <div class="flex items-center gap-2 text-[10px] text-gray-300 font-semibold pt-0.5">
+                            <i class="fa-solid fa-music text-[9px] text-cyan-400"></i>
+                            <span class="truncate max-w-[180px]">Cricton Sports Sound • Original</span>
+                        </div>
+                    </div>
+
+                    <!-- Video Progress Indicator -->
+                    <div class="absolute bottom-0 inset-x-0 h-0.5 bg-white/20 z-30">
+                        <div id="progress-${item.id}" class="h-full bg-rose-500 w-0"></div>
+                    </div>
+                `;
+                wrapper.appendChild(div);
+            });
+
+            setupIntersectionObserver();
+        }
+
+        function setupIntersectionObserver() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const videoId = entry.target.dataset.id;
+                    const videoUrl = entry.target.dataset.videoUrl;
+                    const videoEl = document.getElementById(`video-${videoId}`);
+                    
+                    if (entry.isIntersecting) {
+                        playVideo(videoId, videoUrl, videoEl);
+                        activeShortId = videoId;
+                        // Record View Count in Firebase
+                        db.ref(`shorts/${videoId}/views`).transaction(c => (c || 0) + 1);
+                    } else {
+                        pauseVideo(videoId, videoEl);
+                    }
+                });
+            }, { threshold: 0.65 });
+
+            document.querySelectorAll('.reel-item').forEach(item => observer.observe(item));
+        }
+
+        function playVideo(id, url, videoEl) {
+            if (!videoEl) return;
+            if (!videoEl.src && url) {
+                if (url.includes('.m3u8') && Hls.isSupported()) {
+                    if (currentHlsInstances[id]) currentHlsInstances[id].destroy();
+                    const hls = new Hls({ enableWorker: true });
+                    hls.loadSource(url);
+                    hls.attachMedia(videoEl);
+                    currentHlsInstances[id] = hls;
+                } else {
+                    videoEl.src = url;
+                }
+            }
+
+            videoEl.play().catch(e => {
+                videoEl.muted = true;
+                videoEl.play();
+            });
+
+            videoEl.ontimeupdate = () => {
+                const prog = document.getElementById(`progress-${id}`);
+                if (prog && videoEl.duration) {
+                    prog.style.width = `${(videoEl.currentTime / videoEl.duration) * 100}%`;
+                }
+            };
+        }
+
+        function pauseVideo(id, videoEl) {
+            if (videoEl) {
+                videoEl.pause();
+                videoEl.currentTime = 0;
+            }
+        }
+
+        let tapTimeout = null;
+        function handleVideoTap(event, id) {
+            const videoEl = document.getElementById(`video-${id}`);
+            if (tapTimeout) {
+                clearTimeout(tapTimeout);
+                tapTimeout = null;
+                // Double Tap Triggered -> Like Action
+                triggerDoubleTapLike(id);
+            } else {
+                tapTimeout = setTimeout(() => {
+                    tapTimeout = null;
+                    // Single Tap Triggered -> Toggle Play/Pause & Mute
+                    if (videoEl) {
+                        if (videoEl.paused) videoEl.play();
+                        else videoEl.pause();
+                    }
+                }, 280);
+            }
+        }
+
+        function triggerDoubleTapLike(id) {
+            const burst = document.getElementById(`heartBurst-${id}`);
+            if (burst) {
+                burst.classList.remove('hidden');
+                setTimeout(() => burst.classList.add('hidden'), 800);
+            }
+            if (localStorage.getItem(`cricton_short_liked_${id}`) !== 'true') {
+                toggleLike(id);
+            }
+        }
+
+        function toggleLike(id) {
+            const isLiked = localStorage.getItem(`cricton_short_liked_${id}`) === 'true';
+            const icon = document.getElementById(`likeIcon-${id}`);
+            const countEl = document.getElementById(`likeCount-${id}`);
+
+            if (isLiked) {
+                localStorage.setItem(`cricton_short_liked_${id}`, 'false');
+                if (icon) { icon.classList.remove('text-rose-500'); icon.classList.add('text-white'); }
+                db.ref(`shorts/${id}/likes`).transaction(c => Math.max(0, (c || 1) - 1));
+            } else {
+                localStorage.setItem(`cricton_short_liked_${id}`, 'true');
+                if (icon) { icon.classList.remove('text-white'); icon.classList.add('text-rose-500'); }
+                db.ref(`shorts/${id}/likes`).transaction(c => (c || 0) + 1);
+            }
+        }
+
+        function openComments(id) {
+            activeShortId = id;
+            toggleComments(true);
+            loadComments(id);
+        }
+
+        function toggleComments(show) {
+            const modal = document.getElementById('commentModal');
+            const backdrop = document.getElementById('commentBackdrop');
+            if (show) {
+                backdrop.classList.remove('hidden');
+                modal.classList.remove('translate-y-full');
+            } else {
+                modal.classList.add('translate-y-full');
+                backdrop.classList.add('hidden');
+            }
+        }
+
+        function loadComments(id) {
+            const list = document.getElementById('commentsList');
+            list.innerHTML = `<div class="text-center py-6 text-xs text-gray-500"><i class="fa-solid fa-spinner fa-spin"></i> Loading comments...</div>`;
+
+            db.ref(`shorts_comments/${id}`).on('value', snap => {
+                const data = snap.val() || {};
+                const keys = Object.keys(data);
+                document.getElementById('modalCommentCount').innerText = keys.length;
+
+                if (keys.length === 0) {
+                    list.innerHTML = `<div class="text-center py-10 text-xs text-gray-500">No comments yet. Say something!</div>`;
+                    return;
+                }
+
+                list.innerHTML = '';
+                keys.reverse().forEach(k => {
+                    const c = data[k];
+                    list.innerHTML += `
+                        <div class="flex items-start gap-2.5">
+                            <div class="w-7 h-7 rounded-full bg-cyan-500/20 text-cyan-400 font-bold text-xs flex items-center justify-center shrink-0 border border-cyan-500/30">
+                                ${(c.name || 'U').charAt(0).toUpperCase()}
+                            </div>
+                            <div class="flex-1 bg-gray-900/60 p-2.5 rounded-2xl border border-gray-800">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[11px] font-bold text-gray-300">${c.name || 'Cricket Fan'}</span>
+                                    <span class="text-[9px] text-gray-500">${c.time || 'Just now'}</span>
+                                </div>
+                                <p class="text-xs text-gray-200 mt-0.5">${c.text}</p>
+                            </div>
+                        </div>`;
+                });
+            });
+        }
+
+        function submitComment() {
+            const input = document.getElementById('commentInput');
+            const text = input.value.trim();
+            if (!text || !activeShortId) return;
+
+            const newComment = {
+                name: 'User_' + uId.substr(-4),
+                text: text,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            db.ref(`shorts_comments/${activeShortId}`).push(newComment);
+            db.ref(`shorts/${activeShortId}/comments_count`).transaction(c => (c || 0) + 1);
+            input.value = '';
+        }
+
+        function shareShort(id, title) {
+            const shareUrl = `${window.location.origin}/player.html?type=shorts&id=${id}`;
+            if (navigator.share) {
+                navigator.share({ title: title || 'Cricton Shorts', url: shareUrl });
+            } else {
+                navigator.clipboard.writeText(shareUrl);
+                alert('Shorts Link Copied to Clipboard!');
+            }
+        }
+
+        function formatCount(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num;
+        }
+    </script>
+</body>
+</html>
